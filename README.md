@@ -15,6 +15,20 @@ A collection of utility tools built with HTML and JavaScript for personal use. A
 
 **File:** `epub-reader.html`
 
+### 📝 Markdown Previewer
+- Real-time markdown preview with live editing
+- Export to HTML with styled formatting
+- Export to PDF document
+- Copy markdown source to clipboard
+- Copy rendered HTML to clipboard
+- Auto-save to localStorage
+- Full GitHub Flavored Markdown support
+- Syntax highlighting for code blocks
+- Tables, blockquotes, and lists
+- Responsive split-view design (mobile-friendly)
+
+**File:** `markdown-previewer.html`
+
 ## 🚀 Usage
 
 Simply open any HTML file in your web browser. No installation or server required!
