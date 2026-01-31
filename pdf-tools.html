@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF & Document Tools</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+        :root {
+            --primary: #ef4444;
+            --primary-dark: #dc2626;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary), #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .tab-btn:hover {
+            border-color: var(--primary);
+        }
+        
+        .tab-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .tool-section {
+            display: none;
+        }
+        
+        .tool-section.active {
+            display: block;
+        }
+        
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .card h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .drop-zone-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .drop-zone input {
+            display: none;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #16a34a;
+        }
+        
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+        
+        .btn-secondary:hover {
+            background: #475569;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+        
+        .back-link:hover {
+            color: var(--primary);
+        }
+        
+        /* PDF Viewer Styles */
+        .pdf-viewer-container {
+            display: flex;
+            gap: 20px;
+            height: 70vh;
+        }
+        
+        .pdf-sidebar {
+            width: 200px;
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 10px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        
+        .pdf-thumbnail {
+            cursor: pointer;
+            margin-bottom: 10px;
+            border: 2px solid transparent;
+            border-radius: 4px;
+            transition: border-color 0.2s;
+        }
+        
+        .pdf-thumbnail:hover, .pdf-thumbnail.active {
+            border-color: var(--primary);
+        }
+        
+        .pdf-thumbnail canvas {
+            width: 100%;
+            display: block;
+        }
+        
+        .pdf-thumbnail-label {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding: 5px;
+        }
+        
+        .pdf-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        
+        .pdf-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 15px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .pdf-controls input[type="number"] {
+            width: 60px;
+            padding: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            text-align: center;
+        }
+        
+        .pdf-controls select {
+            padding: 8px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+        }
+        
+        .pdf-canvas-container {
+            flex: 1;
+            overflow: auto;
+            background: var(--bg);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        #pdfCanvas {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        /* PDF Merge Styles */
+        .pdf-list {
+            min-height: 200px;
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .pdf-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: grab;
+        }
+        
+        .pdf-item:active {
+            cursor: grabbing;
+        }
+        
+        .pdf-item.dragging {
+            opacity: 0.5;
+        }
+        
+        .pdf-item-icon {
+            font-size: 2rem;
+        }
+        
+        .pdf-item-info {
+            flex: 1;
+        }
+        
+        .pdf-item-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .pdf-item-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .pdf-item-remove {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+        
+        .pdf-item-handle {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+        
+        /* EPUB Reader Styles */
+        .epub-container {
+            display: flex;
+            gap: 20px;
+            height: 70vh;
+        }
+        
+        .epub-toc {
+            width: 250px;
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        
+        .epub-toc h3 {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .toc-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            transition: background 0.2s;
+        }
+        
+        .toc-item:hover {
+            background: var(--bg-card);
+        }
+        
+        .toc-item.active {
+            background: var(--primary);
+        }
+        
+        .epub-content {
+            flex: 1;
+            background: #fff;
+            color: #1a1a1a;
+            border-radius: 8px;
+            padding: 40px;
+            overflow-y: auto;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        
+        .epub-content h1, .epub-content h2, .epub-content h3 {
+            margin: 1em 0 0.5em;
+        }
+        
+        .epub-content p {
+            margin-bottom: 1em;
+        }
+        
+        .epub-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .epub-controls label {
+            color: var(--text-muted);
+        }
+        
+        .epub-controls select, .epub-controls input {
+            padding: 8px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 20px;
+            font-size: 1.1rem;
+        }
+        
+        .file-info {
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        
+        .file-info span {
+            color: var(--text);
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .pdf-viewer-container, .epub-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .pdf-sidebar, .epub-toc {
+                width: 100%;
+                max-height: 200px;
+            }
+            
+            .pdf-canvas-container, .epub-content {
+                min-height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p class="loading-text" id="loadingText">Loading document...</p>
+    </div>
+
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Tools</a>
+        
+        <header>
+            <h1>📄 PDF & Document Tools</h1>
+            <p>View, merge PDFs and read EPUB books - all in your browser</p>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="viewer">📖 PDF Viewer</button>
+            <button class="tab-btn" data-tab="merge">🔗 Merge PDFs</button>
+            <button class="tab-btn" data-tab="split">✂️ Split PDF</button>
+            <button class="tab-btn" data-tab="epub">📚 EPUB Reader</button>
+        </div>
+        
+        <!-- PDF Viewer -->
+        <div class="tool-section active" id="viewer">
+            <div class="card">
+                <h2>PDF Viewer</h2>
+                
+                <div class="drop-zone" id="viewerDropZone">
+                    <div class="drop-zone-icon">📄</div>
+                    <p>Drag & drop a PDF file here or click to select</p>
+                    <input type="file" id="viewerInput" accept=".pdf,application/pdf">
+                </div>
+                
+                <div id="viewerContent" style="display: none;">
+                    <div class="file-info" id="pdfInfo"></div>
+                    
+                    <div class="pdf-viewer-container">
+                        <div class="pdf-sidebar" id="pdfSidebar"></div>
+                        
+                        <div class="pdf-main">
+                            <div class="pdf-controls">
+                                <button class="btn btn-secondary" id="prevPage">← Prev</button>
+                                <span>Page </span>
+                                <input type="number" id="pageNum" min="1" value="1">
+                                <span> of <span id="totalPages">0</span></span>
+                                <button class="btn btn-secondary" id="nextPage">Next →</button>
+                                
+                                <select id="zoomLevel">
+                                    <option value="0.5">50%</option>
+                                    <option value="0.75">75%</option>
+                                    <option value="1" selected>100%</option>
+                                    <option value="1.25">125%</option>
+                                    <option value="1.5">150%</option>
+                                    <option value="2">200%</option>
+                                </select>
+                                
+                                <button class="btn btn-primary" id="downloadPdf">💾 Download</button>
+                            </div>
+                            
+                            <div class="pdf-canvas-container">
+                                <canvas id="pdfCanvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PDF Merge -->
+        <div class="tool-section" id="merge">
+            <div class="card">
+                <h2>Merge PDFs</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    Combine multiple PDF files into one. Drag to reorder.
+                </p>
+                
+                <div class="drop-zone" id="mergeDropZone">
+                    <div class="drop-zone-icon">📑</div>
+                    <p>Drag & drop PDF files here or click to select</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;">You can select multiple files</p>
+                    <input type="file" id="mergeInput" accept=".pdf,application/pdf" multiple>
+                </div>
+                
+                <div class="pdf-list" id="mergeList">
+                    <p style="text-align: center; color: var(--text-muted);">No PDFs added yet</p>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="mergePdfs" disabled>🔗 Merge PDFs</button>
+                    <button class="btn btn-secondary" id="clearMerge">Clear All</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PDF Split -->
+        <div class="tool-section" id="split">
+            <div class="card">
+                <h2>Split PDF</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    Extract specific pages from a PDF file.
+                </p>
+                
+                <div class="drop-zone" id="splitDropZone">
+                    <div class="drop-zone-icon">📄</div>
+                    <p>Drag & drop a PDF file here or click to select</p>
+                    <input type="file" id="splitInput" accept=".pdf,application/pdf">
+                </div>
+                
+                <div id="splitContent" style="display: none;">
+                    <div class="file-info" id="splitInfo"></div>
+                    
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 10px; color: var(--text-muted);">
+                            Enter page range (e.g., "1-3, 5, 7-9"):
+                        </label>
+                        <input type="text" id="pageRange" placeholder="1-3, 5, 7-9" 
+                               style="width: 100%; max-width: 400px; padding: 12px; background: var(--bg); 
+                                      border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 1rem;">
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="extractPages">✂️ Extract Pages</button>
+                        <button class="btn btn-secondary" id="clearSplit">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- EPUB Reader -->
+        <div class="tool-section" id="epub">
+            <div class="card">
+                <h2>EPUB Reader</h2>
+                
+                <div class="drop-zone" id="epubDropZone">
+                    <div class="drop-zone-icon">📚</div>
+                    <p>Drag & drop an EPUB file here or click to select</p>
+                    <input type="file" id="epubInput" accept=".epub,application/epub+zip">
+                </div>
+                
+                <div id="epubContent" style="display: none;">
+                    <div class="file-info" id="epubInfo"></div>
+                    
+                    <div class="epub-controls">
+                        <label>Font Size:</label>
+                        <select id="epubFontSize">
+                            <option value="14">Small</option>
+                            <option value="18" selected>Medium</option>
+                            <option value="22">Large</option>
+                            <option value="26">X-Large</option>
+                        </select>
+                        
+                        <label>Theme:</label>
+                        <select id="epubTheme">
+                            <option value="light">Light</option>
+                            <option value="sepia">Sepia</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                        
+                        <button class="btn btn-secondary" id="prevChapter">← Prev Chapter</button>
+                        <button class="btn btn-secondary" id="nextChapter">Next Chapter →</button>
+                    </div>
+                    
+                    <div class="epub-container">
+                        <div class="epub-toc" id="epubToc">
+                            <h3>Table of Contents</h3>
+                            <div id="tocList"></div>
+                        </div>
+                        <div class="epub-content" id="epubReader"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tool-section').forEach(s => s.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        function showLoading(text = 'Loading...') {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function setupDropZone(dropZoneId, inputId, onFileLoad, multiple = false) {
+            const dropZone = document.getElementById(dropZoneId);
+            const input = document.getElementById(inputId);
+
+            dropZone.addEventListener('click', () => input.click());
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = multiple ? Array.from(e.dataTransfer.files) : [e.dataTransfer.files[0]];
+                onFileLoad(files);
+            });
+            
+            input.addEventListener('change', (e) => {
+                const files = multiple ? Array.from(e.target.files) : [e.target.files[0]];
+                if (files[0]) onFileLoad(files);
+            });
+        }
+
+        // ==================== PDF VIEWER ====================
+        let pdfDoc = null;
+        let currentPage = 1;
+        let pdfData = null;
+
+        function initViewer() {
+            setupDropZone('viewerDropZone', 'viewerInput', (files) => loadPdf(files[0]));
+            
+            document.getElementById('prevPage').addEventListener('click', () => goToPage(currentPage - 1));
+            document.getElementById('nextPage').addEventListener('click', () => goToPage(currentPage + 1));
+            document.getElementById('pageNum').addEventListener('change', (e) => goToPage(parseInt(e.target.value)));
+            document.getElementById('zoomLevel').addEventListener('change', () => renderPage(currentPage));
+            document.getElementById('downloadPdf').addEventListener('click', downloadCurrentPdf);
+        }
+
+        async function loadPdf(file) {
+            showLoading('Loading PDF...');
+            
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                pdfData = arrayBuffer;
+                pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                
+                document.getElementById('totalPages').textContent = pdfDoc.numPages;
+                document.getElementById('pageNum').max = pdfDoc.numPages;
+                
+                document.getElementById('pdfInfo').innerHTML = 
+                    `File: <span>${file.name}</span> | 
+                     Pages: <span>${pdfDoc.numPages}</span> | 
+                     Size: <span>${formatFileSize(file.size)}</span>`;
+                
+                document.getElementById('viewerContent').style.display = 'block';
+                
+                await generateThumbnails();
+                await goToPage(1);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('Error loading PDF. Please make sure it\'s a valid PDF file.');
+            }
+            
+            hideLoading();
+        }
+
+        async function generateThumbnails() {
+            const sidebar = document.getElementById('pdfSidebar');
+            sidebar.innerHTML = '';
+            
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
+                const page = await pdfDoc.getPage(i);
+                const viewport = page.getViewport({ scale: 0.2 });
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                
+                const thumbDiv = document.createElement('div');
+                thumbDiv.className = 'pdf-thumbnail' + (i === 1 ? ' active' : '');
+                thumbDiv.dataset.page = i;
+                thumbDiv.appendChild(canvas);
+                
+                const label = document.createElement('div');
+                label.className = 'pdf-thumbnail-label';
+                label.textContent = `Page ${i}`;
+                thumbDiv.appendChild(label);
+                
+                thumbDiv.addEventListener('click', () => goToPage(i));
+                sidebar.appendChild(thumbDiv);
+            }
+        }
+
+        async function goToPage(num) {
+            if (!pdfDoc || num < 1 || num > pdfDoc.numPages) return;
+            
+            currentPage = num;
+            document.getElementById('pageNum').value = num;
+            
+            // Update thumbnail selection
+            document.querySelectorAll('.pdf-thumbnail').forEach(t => t.classList.remove('active'));
+            const activeThumb = document.querySelector(`.pdf-thumbnail[data-page="${num}"]`);
+            if (activeThumb) {
+                activeThumb.classList.add('active');
+                activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            
+            await renderPage(num);
+        }
+
+        async function renderPage(num) {
+            const page = await pdfDoc.getPage(num);
+            const scale = parseFloat(document.getElementById('zoomLevel').value);
+            const viewport = page.getViewport({ scale: scale * 1.5 });
+            
+            const canvas = document.getElementById('pdfCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            await page.render({
+                canvasContext: ctx,
+                viewport: viewport
+            }).promise;
+        }
+
+        function downloadCurrentPdf() {
+            if (!pdfData) return;
+            
+            const blob = new Blob([pdfData], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'document.pdf';
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        // ==================== PDF MERGE ====================
+        let pdfFiles = [];
+
+        function initMerge() {
+            setupDropZone('mergeDropZone', 'mergeInput', addPdfFiles, true);
+            
+            document.getElementById('mergePdfs').addEventListener('click', mergePdfs);
+            document.getElementById('clearMerge').addEventListener('click', clearMerge);
+        }
+
+        async function addPdfFiles(files) {
+            for (const file of files) {
+                if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    
+                    pdfFiles.push({
+                        name: file.name,
+                        size: file.size,
+                        pages: pdf.numPages,
+                        data: arrayBuffer
+                    });
+                }
+            }
+            
+            updateMergeList();
+        }
+
+        function updateMergeList() {
+            const list = document.getElementById('mergeList');
+            
+            if (pdfFiles.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No PDFs added yet</p>';
+                document.getElementById('mergePdfs').disabled = true;
+                return;
+            }
+            
+            document.getElementById('mergePdfs').disabled = pdfFiles.length < 2;
+            
+            list.innerHTML = pdfFiles.map((file, index) => `
+                <div class="pdf-item" draggable="true" data-index="${index}">
+                    <span class="pdf-item-handle">☰</span>
+                    <span class="pdf-item-icon">📄</span>
+                    <div class="pdf-item-info">
+                        <div class="pdf-item-name">${file.name}</div>
+                        <div class="pdf-item-meta">${file.pages} pages • ${formatFileSize(file.size)}</div>
+                    </div>
+                    <button class="pdf-item-remove" onclick="removePdf(${index})">×</button>
+                </div>
+            `).join('');
+            
+            // Setup drag and drop reordering
+            setupDragReorder();
+        }
+
+        function removePdf(index) {
+            pdfFiles.splice(index, 1);
+            updateMergeList();
+        }
+
+        function setupDragReorder() {
+            const items = document.querySelectorAll('.pdf-item');
+            let draggedItem = null;
+            
+            items.forEach(item => {
+                item.addEventListener('dragstart', () => {
+                    draggedItem = item;
+                    setTimeout(() => item.classList.add('dragging'), 0);
+                });
+                
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                    draggedItem = null;
+                });
+                
+                item.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (draggedItem && draggedItem !== item) {
+                        const list = document.getElementById('mergeList');
+                        const items = Array.from(list.children);
+                        const draggedIndex = items.indexOf(draggedItem);
+                        const targetIndex = items.indexOf(item);
+                        
+                        if (draggedIndex < targetIndex) {
+                            item.after(draggedItem);
+                        } else {
+                            item.before(draggedItem);
+                        }
+                        
+                        // Update array order
+                        const [removed] = pdfFiles.splice(draggedIndex, 1);
+                        pdfFiles.splice(targetIndex, 0, removed);
+                    }
+                });
+            });
+        }
+
+        async function mergePdfs() {
+            if (pdfFiles.length < 2) return;
+            
+            showLoading('Merging PDFs...');
+            
+            try {
+                const { PDFDocument } = PDFLib;
+                const mergedPdf = await PDFDocument.create();
+                
+                for (const file of pdfFiles) {
+                    const pdf = await PDFDocument.load(file.data);
+                    const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    pages.forEach(page => mergedPdf.addPage(page));
+                }
+                
+                const mergedBytes = await mergedPdf.save();
+                const blob = new Blob([mergedBytes], { type: 'application/pdf' });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `merged-${Date.now()}.pdf`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+            } catch (error) {
+                console.error('Error merging PDFs:', error);
+                alert('Error merging PDFs. Please try again.');
+            }
+            
+            hideLoading();
+        }
+
+        function clearMerge() {
+            pdfFiles = [];
+            document.getElementById('mergeInput').value = '';
+            updateMergeList();
+        }
+
+        // ==================== PDF SPLIT ====================
+        let splitPdfData = null;
+        let splitPdfDoc = null;
+
+        function initSplit() {
+            setupDropZone('splitDropZone', 'splitInput', (files) => loadSplitPdf(files[0]));
+            
+            document.getElementById('extractPages').addEventListener('click', extractPages);
+            document.getElementById('clearSplit').addEventListener('click', clearSplit);
+        }
+
+        async function loadSplitPdf(file) {
+            showLoading('Loading PDF...');
+            
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                splitPdfData = arrayBuffer;
+                splitPdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                
+                document.getElementById('splitInfo').innerHTML = 
+                    `File: <span>${file.name}</span> | 
+                     Pages: <span>${splitPdfDoc.numPages}</span> | 
+                     Size: <span>${formatFileSize(file.size)}</span>`;
+                
+                document.getElementById('pageRange').placeholder = `1-${splitPdfDoc.numPages}`;
+                document.getElementById('splitContent').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('Error loading PDF. Please make sure it\'s a valid PDF file.');
+            }
+            
+            hideLoading();
+        }
+
+        function parsePageRange(rangeStr, maxPages) {
+            const pages = new Set();
+            const parts = rangeStr.split(',').map(s => s.trim());
+            
+            for (const part of parts) {
+                if (part.includes('-')) {
+                    const [start, end] = part.split('-').map(n => parseInt(n.trim()));
+                    for (let i = start; i <= end && i <= maxPages; i++) {
+                        if (i >= 1) pages.add(i);
+                    }
+                } else {
+                    const num = parseInt(part);
+                    if (num >= 1 && num <= maxPages) pages.add(num);
+                }
+            }
+            
+            return Array.from(pages).sort((a, b) => a - b);
+        }
+
+        async function extractPages() {
+            if (!splitPdfData) return;
+            
+            const rangeStr = document.getElementById('pageRange').value;
+            if (!rangeStr) {
+                alert('Please enter a page range.');
+                return;
+            }
+            
+            const pages = parsePageRange(rangeStr, splitPdfDoc.numPages);
+            if (pages.length === 0) {
+                alert('Invalid page range.');
+                return;
+            }
+            
+            showLoading('Extracting pages...');
+            
+            try {
+                const { PDFDocument } = PDFLib;
+                const srcPdf = await PDFDocument.load(splitPdfData);
+                const newPdf = await PDFDocument.create();
+                
+                const pageIndices = pages.map(p => p - 1);
+                const copiedPages = await newPdf.copyPages(srcPdf, pageIndices);
+                copiedPages.forEach(page => newPdf.addPage(page));
+                
+                const pdfBytes = await newPdf.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `extracted-pages-${Date.now()}.pdf`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+            } catch (error) {
+                console.error('Error extracting pages:', error);
+                alert('Error extracting pages. Please try again.');
+            }
+            
+            hideLoading();
+        }
+
+        function clearSplit() {
+            splitPdfData = null;
+            splitPdfDoc = null;
+            document.getElementById('splitInput').value = '';
+            document.getElementById('pageRange').value = '';
+            document.getElementById('splitContent').style.display = 'none';
+        }
+
+        // ==================== EPUB READER ====================
+        let epubData = null;
+        let epubChapters = [];
+        let currentChapter = 0;
+
+        function initEpub() {
+            setupDropZone('epubDropZone', 'epubInput', (files) => loadEpub(files[0]));
+            
+            document.getElementById('prevChapter').addEventListener('click', () => goToChapter(currentChapter - 1));
+            document.getElementById('nextChapter').addEventListener('click', () => goToChapter(currentChapter + 1));
+            document.getElementById('epubFontSize').addEventListener('change', updateEpubStyle);
+            document.getElementById('epubTheme').addEventListener('change', updateEpubStyle);
+        }
+
+        async function loadEpub(file) {
+            showLoading('Loading EPUB...');
+            
+            try {
+                const zip = new JSZip();
+                const zipData = await zip.loadAsync(file);
+                
+                // Find container.xml
+                const containerXml = await zipData.file('META-INF/container.xml').async('text');
+                const containerDoc = new DOMParser().parseFromString(containerXml, 'text/xml');
+                const rootfilePath = containerDoc.querySelector('rootfile').getAttribute('full-path');
+                
+                // Parse content.opf
+                const opfContent = await zipData.file(rootfilePath).async('text');
+                const opfDoc = new DOMParser().parseFromString(opfContent, 'text/xml');
+                
+                // Get metadata
+                const title = opfDoc.querySelector('title')?.textContent || 'Unknown Title';
+                const author = opfDoc.querySelector('creator')?.textContent || 'Unknown Author';
+                
+                // Get spine items (chapter order)
+                const spine = opfDoc.querySelectorAll('spine itemref');
+                const manifest = opfDoc.querySelectorAll('manifest item');
+                
+                const manifestMap = {};
+                manifest.forEach(item => {
+                    manifestMap[item.getAttribute('id')] = item.getAttribute('href');
+                });
+                
+                // Get base path for content files
+                const basePath = rootfilePath.substring(0, rootfilePath.lastIndexOf('/') + 1);
+                
+                epubChapters = [];
+                for (const itemRef of spine) {
+                    const idref = itemRef.getAttribute('idref');
+                    const href = manifestMap[idref];
+                    if (href) {
+                        const fullPath = basePath + href;
+                        const file = zipData.file(fullPath);
+                        if (file) {
+                            const content = await file.async('text');
+                            epubChapters.push({
+                                id: idref,
+                                href: href,
+                                content: content
+                            });
+                        }
+                    }
+                }
+                
+                epubData = zipData;
+                
+                document.getElementById('epubInfo').innerHTML = 
+                    `Title: <span>${title}</span> | 
+                     Author: <span>${author}</span> | 
+                     Chapters: <span>${epubChapters.length}</span>`;
+                
+                // Build TOC
+                buildToc();
+                
+                document.getElementById('epubContent').style.display = 'block';
+                goToChapter(0);
+            } catch (error) {
+                console.error('Error loading EPUB:', error);
+                alert('Error loading EPUB. Please make sure it\'s a valid EPUB file.');
+            }
+            
+            hideLoading();
+        }
+
+        function buildToc() {
+            const tocList = document.getElementById('tocList');
+            tocList.innerHTML = epubChapters.map((chapter, index) => {
+                // Try to extract title from chapter content
+                const doc = new DOMParser().parseFromString(chapter.content, 'text/html');
+                let title = doc.querySelector('title')?.textContent || 
+                           doc.querySelector('h1')?.textContent ||
+                           doc.querySelector('h2')?.textContent ||
+                           `Chapter ${index + 1}`;
+                title = title.trim().substring(0, 40);
+                
+                return `<div class="toc-item${index === 0 ? ' active' : ''}" data-chapter="${index}">${title}</div>`;
+            }).join('');
+            
+            tocList.querySelectorAll('.toc-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    goToChapter(parseInt(item.dataset.chapter));
+                });
+            });
+        }
+
+        function goToChapter(index) {
+            if (index < 0 || index >= epubChapters.length) return;
+            
+            currentChapter = index;
+            const chapter = epubChapters[index];
+            
+            // Parse and display chapter content
+            const doc = new DOMParser().parseFromString(chapter.content, 'text/html');
+            const body = doc.body;
+            
+            // Clean up content
+            const reader = document.getElementById('epubReader');
+            reader.innerHTML = body.innerHTML;
+            reader.scrollTop = 0;
+            
+            // Update TOC selection
+            document.querySelectorAll('.toc-item').forEach((item, i) => {
+                item.classList.toggle('active', i === index);
+            });
+            
+            updateEpubStyle();
+        }
+
+        function updateEpubStyle() {
+            const reader = document.getElementById('epubReader');
+            const fontSize = document.getElementById('epubFontSize').value;
+            const theme = document.getElementById('epubTheme').value;
+            
+            reader.style.fontSize = fontSize + 'px';
+            
+            const themes = {
+                light: { bg: '#ffffff', color: '#1a1a1a' },
+                sepia: { bg: '#f4ecd8', color: '#5c4b37' },
+                dark: { bg: '#1e1e1e', color: '#e0e0e0' }
+            };
+            
+            reader.style.background = themes[theme].bg;
+            reader.style.color = themes[theme].color;
+        }
+
+        // Initialize all tools
+        document.addEventListener('DOMContentLoaded', () => {
+            initViewer();
+            initMerge();
+            initSplit();
+            initEpub();
+        });
+    </script>
+</body>
+</html>
