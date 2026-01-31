@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF & Document Tools</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p class="loading-text" id="loadingText">Loading document...</p>
+    </div>
+
+    <div class="container">
+        <a href="../../index.html" class="back-link">← Back to Tools</a>
+        
+        <header>
+            <h1>📄 PDF & Document Tools</h1>
+            <p>View, merge, split PDFs, remove passwords, and read EPUB books - all in your browser</p>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="viewer">📖 PDF Viewer</button>
+            <button class="tab-btn" data-tab="merge">🔗 Merge PDFs</button>
+            <button class="tab-btn" data-tab="split">✂️ Split PDF</button>
+            <button class="tab-btn" data-tab="unlock">🔓 Remove Password</button>
+            <button class="tab-btn" data-tab="epub">📚 EPUB Reader</button>
+        </div>
+        
+        <!-- PDF Viewer -->
+        <div class="tool-section active" id="viewer">
+            <div class="card">
+                <h2>PDF Viewer</h2>
+                
+                <div class="drop-zone" id="viewerDropZone">
+                    <div class="drop-zone-icon">📄</div>
+                    <p>Drag & drop a PDF file here or click to select</p>
+                    <input type="file" id="viewerInput" accept=".pdf,application/pdf">
+                </div>
+                
+                <div id="viewerContent" style="display: none;">
+                    <div class="file-info" id="pdfInfo"></div>
+                    
+                    <div class="pdf-viewer-container">
+                        <div class="pdf-sidebar" id="pdfSidebar"></div>
+                        
+                        <div class="pdf-main">
+                            <div class="pdf-controls">
+                                <button class="btn btn-secondary" id="prevPage">← Prev</button>
+                                <span>Page </span>
+                                <input type="number" id="pageNum" min="1" value="1">
+                                <span> of <span id="totalPages">0</span></span>
+                                <button class="btn btn-secondary" id="nextPage">Next →</button>
+                                
+                                <select id="zoomLevel">
+                                    <option value="0.5">50%</option>
+                                    <option value="0.75">75%</option>
+                                    <option value="1" selected>100%</option>
+                                    <option value="1.25">125%</option>
+                                    <option value="1.5">150%</option>
+                                    <option value="2">200%</option>
+                                    <option value="fit-width">Fit Width</option>
+                                    <option value="fit-page">Fit Page</option>
+                                </select>
+                                
+                                <select id="viewMode">
+                                    <option value="single">Single Page</option>
+                                    <option value="continuous">Continuous</option>
+                                </select>
+                                
+                                <button class="btn btn-secondary" id="rotatePdf">🔄 Rotate</button>
+                                <button class="btn btn-primary" id="downloadPdf">💾 Download</button>
+                            </div>
+                            
+                            <div class="pdf-canvas-container" id="pdfCanvasContainer">
+                                <!-- Canvases will be created dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PDF Merge -->
+        <div class="tool-section" id="merge">
+            <div class="card">
+                <h2>Merge PDFs</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    Combine multiple PDF files into one. Drag to reorder.
+                </p>
+                
+                <div class="drop-zone" id="mergeDropZone">
+                    <div class="drop-zone-icon">📑</div>
+                    <p>Drag & drop PDF files here or click to select</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;">You can select multiple files</p>
+                    <input type="file" id="mergeInput" accept=".pdf,application/pdf" multiple>
+                </div>
+                
+                <div class="pdf-list" id="mergeList">
+                    <p style="text-align: center; color: var(--text-muted);">No PDFs added yet</p>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="mergePdfs" disabled>🔗 Merge PDFs</button>
+                    <button class="btn btn-secondary" id="clearMerge">Clear All</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PDF Split -->
+        <div class="tool-section" id="split">
+            <div class="card">
+                <h2>Split PDF</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    Extract specific pages from a PDF file.
+                </p>
+                
+                <div class="drop-zone" id="splitDropZone">
+                    <div class="drop-zone-icon">📄</div>
+                    <p>Drag & drop a PDF file here or click to select</p>
+                    <input type="file" id="splitInput" accept=".pdf,application/pdf">
+                </div>
+                
+                <div id="splitContent" style="display: none;">
+                    <div class="file-info" id="splitInfo"></div>
+                    
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 10px; color: var(--text-muted);">
+                            Enter page range (e.g., "1-3, 5, 7-9"):
+                        </label>
+                        <input type="text" id="pageRange" placeholder="1-3, 5, 7-9" 
+                               style="width: 100%; max-width: 400px; padding: 12px; background: var(--bg); 
+                                      border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 1rem;">
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="extractPages">✂️ Extract Pages</button>
+                        <button class="btn btn-secondary" id="clearSplit">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- EPUB Reader -->
+        <div class="tool-section" id="epub">
+            <div class="card">
+                <h2>📚 EPUB Reader</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    Read EPUB books with a beautiful, customizable reading experience powered by epub.js
+                </p>
+                
+                <div class="drop-zone" id="epubDropZone">
+                    <div class="drop-zone-icon">📚</div>
+                    <p>Drag & drop an EPUB file here or click to select</p>
+                    <input type="file" id="epubInput" accept=".epub,application/epub+zip">
+                </div>
+                
+                <div id="epubContent" style="display: none;">
+                    <div class="file-info" id="epubInfo"></div>
+                    
+                    <div class="epub-controls">
+                        <label>Font Size:</label>
+                        <select id="epubFontSize">
+                            <option value="80">Small</option>
+                            <option value="100" selected>Medium</option>
+                            <option value="120">Large</option>
+                            <option value="140">X-Large</option>
+                        </select>
+                        
+                        <label>Theme:</label>
+                        <select id="epubTheme">
+                            <option value="light">Light</option>
+                            <option value="sepia">Sepia</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                        
+                        <label>Font:</label>
+                        <select id="epubFont">
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Times New Roman', serif">Times</option>
+                            <option value="-apple-system, sans-serif">System</option>
+                            <option value="'Courier New', monospace">Monospace</option>
+                        </select>
+                        
+                        <div class="epub-nav-btns">
+                            <button class="btn btn-secondary" id="prevChapter">← Prev</button>
+                            <button class="btn btn-secondary" id="nextChapter">Next →</button>
+                        </div>
+                    </div>
+                    
+                    <div class="epub-container">
+                        <div class="epub-toc" id="epubToc">
+                            <h3>📖 Table of Contents</h3>
+                            <div id="tocList"></div>
+                        </div>
+                        <div class="epub-main">
+                            <div class="epub-content" id="epubReaderContainer">
+                                <div id="epub-reader"></div>
+                            </div>
+                            <div class="chapter-progress">
+                                <span id="currentPercent">0%</span>
+                                <input type="range" id="progressSlider" min="0" max="100" value="0">
+                                <span id="totalPercent">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PDF Password Remover -->
+        <div class="tool-section" id="unlock">
+            <div class="card">
+                <h2>🔓 PDF Password Remover</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    Remove password protection from PDF files. You'll need to know the password to unlock.
+                </p>
+                
+                <div class="drop-zone" id="unlockDropZone">
+                    <div class="drop-zone-icon">🔒</div>
+                    <p>Drag & drop a password-protected PDF here or click to select</p>
+                    <input type="file" id="unlockInput" accept=".pdf,application/pdf">
+                </div>
+                
+                <div id="unlockContent" style="display: none;">
+                    <div class="file-info" id="unlockInfo"></div>
+                    
+                    <div class="password-status" id="passwordStatus">
+                        <span class="icon">🔒</span>
+                        <div>
+                            <strong>Status: </strong><span id="statusText">Checking...</span>
+                        </div>
+                    </div>
+                    
+                    <div id="passwordSection">
+                        <div class="password-input-group">
+                            <input type="password" id="pdfPassword" placeholder="Enter PDF password">
+                            <button class="btn btn-warning" id="unlockPdf">🔓 Unlock & Remove Password</button>
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">
+                            💡 The unlocked PDF will have no password protection and can be opened freely.
+                        </p>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" id="clearUnlock">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

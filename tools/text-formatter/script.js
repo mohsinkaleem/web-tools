@@ -1,479 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Prettifier & Formatter</title>
-    <style>
-        :root {
-            --primary: #10b981;
-            --primary-dark: #059669;
-            --bg: #0f172a;
-            --bg-card: #1e293b;
-            --text: #e2e8f0;
-            --text-muted: #94a3b8;
-            --border: #334155;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        header {
-            text-align: center;
-            padding: 40px 20px;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 30px;
-        }
-        
-        header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, var(--primary), #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        header p {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-        }
-        
-        .format-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .format-btn {
-            padding: 12px 24px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.2s;
-        }
-        
-        .format-btn:hover {
-            border-color: var(--primary);
-        }
-        
-        .format-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-        
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 20px;
-        }
-        
-        .editor-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        
-        @media (max-width: 900px) {
-            .editor-container {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .editor-panel {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .editor-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .editor-header h3 {
-            font-size: 1rem;
-            color: var(--text-muted);
-        }
-        
-        .editor-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .editor-actions button {
-            padding: 6px 12px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-        }
-        
-        .editor-actions button:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-        
-        textarea {
-            width: 100%;
-            height: 500px;
-            padding: 15px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 14px;
-            line-height: 1.5;
-            resize: vertical;
-        }
-        
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        
-        .output-display {
-            width: 100%;
-            height: 500px;
-            padding: 15px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 14px;
-            line-height: 1.5;
-            overflow: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: var(--primary-dark);
-        }
-        
-        .btn-secondary {
-            background: var(--border);
-            color: var(--text);
-        }
-        
-        .btn-secondary:hover {
-            background: #475569;
-        }
-        
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin: 20px 0;
-        }
-        
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-muted);
-            text-decoration: none;
-            margin-bottom: 20px;
-            transition: color 0.2s;
-        }
-        
-        .back-link:hover {
-            color: var(--primary);
-        }
-        
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            background: var(--bg);
-            border-radius: 8px;
-            margin-top: 15px;
-            font-size: 0.9rem;
-        }
-        
-        .status-bar .status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .status-bar .status.valid {
-            color: var(--success);
-        }
-        
-        .status-bar .status.invalid {
-            color: var(--danger);
-        }
-        
-        .status-bar .stats {
-            color: var(--text-muted);
-        }
-        
-        .options-panel {
-            background: var(--bg);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .options-panel h3 {
-            margin-bottom: 15px;
-            font-size: 1rem;
-            color: var(--text-muted);
-        }
-        
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-        
-        .option-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        
-        .option-group label {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-        
-        .option-group select,
-        .option-group input {
-            padding: 8px 12px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            color: var(--text);
-            font-size: 0.9rem;
-        }
-        
-        .option-group select:focus,
-        .option-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        
-        .checkbox-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .checkbox-option input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            accent-color: var(--primary);
-        }
-        
-        /* Syntax highlighting */
-        .hl-key { color: #f472b6; }
-        .hl-string { color: #a5d6ff; }
-        .hl-number { color: #ffa657; }
-        .hl-boolean { color: #ff7b72; }
-        .hl-null { color: #8b949e; }
-        .hl-bracket { color: #7ee787; }
-        .hl-comment { color: #8b949e; font-style: italic; }
-        .hl-heading { color: #58a6ff; font-weight: bold; }
-        .hl-bold { font-weight: bold; }
-        .hl-italic { font-style: italic; }
-        .hl-code { color: #ffa657; background: rgba(255,166,87,0.1); padding: 2px 4px; border-radius: 3px; }
-        .hl-link { color: #58a6ff; text-decoration: underline; }
-        .hl-list { color: #7ee787; }
-        
-        .error-highlight {
-            background: rgba(239, 68, 68, 0.2);
-            border-left: 3px solid var(--danger);
-            display: block;
-            padding: 2px 5px;
-            margin: 2px 0;
-        }
-        
-        /* Markdown preview */
-        .md-preview {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
-            height: 500px;
-            overflow: auto;
-            line-height: 1.7;
-        }
-        
-        .md-preview h1 { font-size: 2em; margin: 0.67em 0; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
-        .md-preview h2 { font-size: 1.5em; margin: 0.83em 0; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
-        .md-preview h3 { font-size: 1.17em; margin: 1em 0; }
-        .md-preview h4, .md-preview h5, .md-preview h6 { margin: 1.33em 0; }
-        .md-preview p { margin: 1em 0; }
-        .md-preview ul, .md-preview ol { margin: 1em 0; padding-left: 2em; }
-        .md-preview li { margin: 0.5em 0; }
-        .md-preview code { background: var(--bg-card); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
-        .md-preview pre { background: var(--bg-card); padding: 15px; border-radius: 8px; overflow-x: auto; margin: 1em 0; }
-        .md-preview pre code { background: none; padding: 0; }
-        .md-preview blockquote { border-left: 4px solid var(--primary); padding-left: 15px; margin: 1em 0; color: var(--text-muted); }
-        .md-preview a { color: var(--primary); }
-        .md-preview hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
-        .md-preview table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-        .md-preview th, .md-preview td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
-        .md-preview th { background: var(--bg-card); }
-        .md-preview img { max-width: 100%; }
-        
-        .drop-zone {
-            border: 2px dashed var(--border);
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 15px;
-        }
-        
-        .drop-zone:hover, .drop-zone.dragover {
-            border-color: var(--primary);
-            background: rgba(16, 185, 129, 0.1);
-        }
-        
-        .drop-zone input {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <a href="index.html" class="back-link">← Back to Tools</a>
-        
-        <header>
-            <h1>✨ Text Prettifier & Formatter</h1>
-            <p>Format, validate, and beautify JSON, YAML, Markdown, XML and more</p>
-        </header>
-        
-        <div class="format-selector">
-            <button class="format-btn active" data-format="json">{ } JSON</button>
-            <button class="format-btn" data-format="yaml">📋 YAML</button>
-            <button class="format-btn" data-format="markdown">📝 Markdown</button>
-            <button class="format-btn" data-format="xml">&lt;/&gt; XML</button>
-            <button class="format-btn" data-format="html">&lt;html&gt; HTML</button>
-            <button class="format-btn" data-format="css">🎨 CSS</button>
-            <button class="format-btn" data-format="sql">🗃️ SQL</button>
-            <button class="format-btn" data-format="javascript">🟨 JavaScript</button>
-            <button class="format-btn" data-format="python">🐍 Python</button>
-            <button class="format-btn" data-format="go">🔵 Go</button>
-        </div>
-        
-        <div class="card">
-            <div class="drop-zone" id="dropZone">
-                <p>📁 Drop a file here or click to upload</p>
-                <input type="file" id="fileInput" accept=".json,.yaml,.yml,.md,.markdown,.xml,.html,.htm,.css,.sql,.js,.mjs,.jsx,.ts,.tsx,.py,.pyw,.go,.txt">
-            </div>
-            
-            <div class="options-panel" id="optionsPanel">
-                <h3>⚙️ Formatting Options</h3>
-                <div class="options-grid" id="optionsGrid">
-                    <!-- Options will be populated dynamically -->
-                </div>
-            </div>
-            
-            <div class="btn-group">
-                <button class="btn btn-primary" id="formatBtn">✨ Format / Prettify</button>
-                <button class="btn btn-secondary" id="minifyBtn">🗜️ Minify</button>
-                <button class="btn btn-secondary" id="validateBtn">✅ Validate</button>
-                <button class="btn btn-secondary" id="convertBtn">🔄 Convert</button>
-            </div>
-            
-            <div class="editor-container">
-                <div class="editor-panel">
-                    <div class="editor-header">
-                        <h3>📥 Input</h3>
-                        <div class="editor-actions">
-                            <button id="pasteBtn">📋 Paste</button>
-                            <button id="clearBtn">🗑️ Clear</button>
-                            <button id="sampleBtn">📄 Sample</button>
-                        </div>
-                    </div>
-                    <textarea id="inputEditor" placeholder="Paste your code here..."></textarea>
-                </div>
-                
-                <div class="editor-panel">
-                    <div class="editor-header">
-                        <h3>📤 Output</h3>
-                        <div class="editor-actions">
-                            <button id="copyBtn">📋 Copy</button>
-                            <button id="downloadBtn">💾 Download</button>
-                        </div>
-                    </div>
-                    <div class="output-display" id="outputDisplay"></div>
-                </div>
-            </div>
-            
-            <div class="status-bar">
-                <div class="status" id="validationStatus">
-                    <span>Ready</span>
-                </div>
-                <div class="stats" id="stats">
-                    Lines: 0 | Characters: 0
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
-    <script>
-        let currentFormat = 'json';
+let currentFormat = 'json';
         
         // Format configurations
         const formatConfig = {
@@ -1182,87 +707,63 @@
             for (let line of lines) {
                 const trimmed = line.trim();
                 
-                if (!seenNonImport && trimmed.startsWith('import ')) {
-                    imports.push(trimmed);
-                } else if (!seenNonImport && trimmed.startsWith('from ')) {
-                    fromImports.push(trimmed);
-                } else {
-                    if (trimmed.length > 0 && !trimmed.startsWith('#')) {
-                        seenNonImport = true;
-                    }
+                if (!seenNonImport && (trimmed.startsWith('import ') || trimmed.startsWith('from '))) {
+                    if (trimmed.startsWith('import ')) imports.push(trimmed);
+                    else fromImports.push(trimmed);
+                } else if (trimmed.length > 0) {
+                    seenNonImport = true;
+                    otherLines.push(line);
+                } else if (seenNonImport) {
                     otherLines.push(line);
                 }
             }
             
-            // Sort imports if requested
             if (sortImports) {
                 imports.sort();
                 fromImports.sort();
             }
             
-            // Reconstruct with sorted imports
             if (imports.length > 0 || fromImports.length > 0) {
-                formatted = [...imports, ...fromImports, ''];
+                formatted = [...imports, ...fromImports];
+                if (otherLines.length > 0) formatted.push('');
             }
             
-            // Process other lines
-            for (let line of otherLines) {
-                const trimmed = line.trim();
-                
-                if (trimmed.length === 0) {
+            const indentKeywords = ['def', 'class', 'if', 'elif', 'else', 'for', 'while', 'try', 'except', 'finally', 'with', 'async def', 'async for', 'async with'];
+            const dedentKeywords = ['elif', 'else', 'except', 'finally'];
+
+            for (let i = 0; i < otherLines.length; i++) {
+                let line = otherLines[i].trim();
+                if (line.length === 0) {
                     formatted.push('');
                     continue;
                 }
-                
-                // Decrease indent for these keywords
-                if (trimmed.match(/^(elif|else|except|finally)\b/)) {
+
+                // Dedent before checking keyword
+                let isDedent = dedentKeywords.some(kw => line.startsWith(kw + ' ') || line.startsWith(kw + ':') || line === kw);
+                if (isDedent) {
                     currentIndent = Math.max(0, currentIndent - 1);
                 }
-                
-                // Check for inline statements that should be split
-                // e.g., "def foo():print('hi')" -> split to multiple lines
-                const colonMatch = trimmed.match(/^(def |class |if |elif |else:|for |while |try:|except|with )(.+?):(.+)$/);
-                if (colonMatch && !colonMatch[3].startsWith('#')) {
-                    formatted.push(indent.repeat(currentIndent) + colonMatch[1] + colonMatch[2] + ':');
+
+                formatted.push(indent.repeat(currentIndent) + line);
+
+                // Indent after colon
+                if (line.endsWith(':') && !line.startsWith('#')) {
                     currentIndent++;
-                    // Split multiple statements
-                    const statements = colonMatch[3].split(';');
-                    for (const stmt of statements) {
-                        if (stmt.trim()) {
-                            formatted.push(indent.repeat(currentIndent) + stmt.trim());
-                        }
-                    }
-                } else {
-                    formatted.push(indent.repeat(currentIndent) + trimmed);
-                    
-                    // Increase indent after these
-                    if (trimmed.endsWith(':') && !trimmed.startsWith('#')) {
-                        currentIndent++;
-                    }
                 }
-                
-                // Handle return, break, continue, pass - they end a block conceptually
-                if (trimmed.match(/^(return|break|continue|pass|raise)\b/)) {
-                    // Don't auto-decrease, let the next line handle it
+
+                // Simple heuristic for dedenting after return/break/continue
+                // If next line is not indented more and current line ends a block
+                if (line.match(/^(return|break|continue|pass|raise)\b/)) {
+                    // We don't dedent immediately because siblings might follow
+                    // But we could look ahead
+                    let nextLine = (otherLines[i + 1] || '').trim();
+                    if (nextLine && !dedentKeywords.some(kw => nextLine.startsWith(kw)) && !nextLine.endsWith(':')) {
+                        // This is very risky, better to just let the user handle it or use a real parser
+                    }
                 }
             }
             
-            // Clean up multiple blank lines
-            let result = [];
-            let blankCount = 0;
-            for (const line of formatted) {
-                if (line.trim() === '') {
-                    blankCount++;
-                    if (blankCount <= 2) {
-                        result.push('');
-                    }
-                } else {
-                    blankCount = 0;
-                    result.push(line);
-                }
-            }
-            
-            return result.join('\n').trim();
+            return formatted.join('\n').replace(/\n{3,}/g, '\n\n').trim();
         }
         
         // ==================== GO FORMATTER ====================
@@ -1464,22 +965,77 @@
             const outputEl = document.getElementById('outputDisplay');
             outputEl.className = 'output-display';
             
-            // Apply syntax highlighting
-            let highlighted = escapeHtml(text);
-            
             if (currentFormat === 'json') {
-                highlighted = highlightJSON(highlighted);
+                outputEl.innerHTML = highlightTokens(text, [
+                    { regex: /"([^"]+)":/g, class: 'hl-key' },
+                    { regex: /"(?:[^"\\]|\\.)*"/g, class: 'hl-string' },
+                    { regex: /\b-?\d+\.?\d*\b/g, class: 'hl-number' },
+                    { regex: /\b(true|false|null)\b/g, class: 'hl-boolean' },
+                    { regex: /[[\]{}]/g, class: 'hl-bracket' }
+                ]);
             } else if (currentFormat === 'yaml') {
-                highlighted = highlightYAML(highlighted);
+                outputEl.innerHTML = highlightTokens(text, [
+                    { regex: /#.*$/gm, class: 'hl-comment' },
+                    { regex: /^(\s*)([^:\n]+):/gm, class: 'hl-key' },
+                    { regex: /"(?:[^"\\]|\\.)*"/g, class: 'hl-string' },
+                    { regex: /'(?:[^'\\]|\\.)*'/g, class: 'hl-string' },
+                    { regex: /\b(true|false|yes|no|null|~)\b/gi, class: 'hl-boolean' },
+                    { regex: /\b-?\d+\.?\d*\b/g, class: 'hl-number' }
+                ]);
             } else if (currentFormat === 'javascript') {
-                highlighted = highlightJavaScript(highlighted);
+                const keywords = ['const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 
+                                'do', 'switch', 'case', 'break', 'continue', 'try', 'catch', 'finally', 
+                                'throw', 'class', 'extends', 'new', 'this', 'super', 'import', 'export', 
+                                'default', 'from', 'async', 'await', 'yield', 'typeof', 'instanceof', 
+                                'in', 'of', 'delete', 'void', 'static', 'get', 'set'];
+                outputEl.innerHTML = highlightTokens(text, [
+                    { regex: /\/\/.*$/gm, class: 'hl-comment' },
+                    { regex: /\/\*[\s\S]*?\*\//g, class: 'hl-comment' },
+                    { regex: /"(?:[^"\\]|\\.)*"/g, class: 'hl-string' },
+                    { regex: /'(?:[^'\\]|\\.)*'/g, class: 'hl-string' },
+                    { regex: /`(?:[^`\\$]|\\.)*`/g, class: 'hl-string' },
+                    { regex: new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g'), class: 'hl-key' },
+                    { regex: /\b(-?\d+\.?\d*)\b/g, class: 'hl-number' },
+                    { regex: /\b(true|false|null|undefined|NaN|Infinity)\b/g, class: 'hl-boolean' }
+                ]);
             } else if (currentFormat === 'python') {
-                highlighted = highlightPython(highlighted);
+                const keywords = ['def', 'class', 'if', 'elif', 'else', 'for', 'while', 'try', 'except', 
+                                'finally', 'with', 'as', 'import', 'from', 'return', 'yield', 'raise', 
+                                'pass', 'break', 'continue', 'lambda', 'and', 'or', 'not', 'in', 'is', 
+                                'global', 'nonlocal', 'assert', 'del', 'async', 'await'];
+                outputEl.innerHTML = highlightTokens(text, [
+                    { regex: /#.*$/gm, class: 'hl-comment' },
+                    { regex: /"""[\s\S]*?"""/g, class: 'hl-string' },
+                    { regex: /'''[\s\S]*?'''/g, class: 'hl-string' },
+                    { regex: /f?"(?:[^"\\]|\\.)*"/g, class: 'hl-string' },
+                    { regex: /f?'(?:[^'\\]|\\.)*'/g, class: 'hl-string' },
+                    { regex: new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g'), class: 'hl-key' },
+                    { regex: /\b(-?\d+\.?\d*)\b/g, class: 'hl-number' },
+                    { regex: /\b(True|False|None)\b/g, class: 'hl-boolean' },
+                    { regex: /@\w+/g, class: 'hl-key' }
+                ]);
             } else if (currentFormat === 'go') {
-                highlighted = highlightGo(highlighted);
+                const keywords = ['func', 'var', 'const', 'type', 'struct', 'interface', 'map', 'chan',
+                                'if', 'else', 'for', 'range', 'switch', 'case', 'default', 'break', 
+                                'continue', 'return', 'go', 'defer', 'select', 'fallthrough', 'goto',
+                                'package', 'import', 'make', 'new', 'len', 'cap', 'append', 'copy',
+                                'delete', 'panic', 'recover'];
+                const types = ['int', 'int8', 'int16', 'int32', 'int64', 'uint', 'uint8', 'uint16', 
+                              'uint32', 'uint64', 'float32', 'float64', 'complex64', 'complex128',
+                              'bool', 'string', 'byte', 'rune', 'error', 'any'];
+                outputEl.innerHTML = highlightTokens(text, [
+                    { regex: /\/\/.*$/gm, class: 'hl-comment' },
+                    { regex: /\/\*[\s\S]*?\*\//g, class: 'hl-comment' },
+                    { regex: /"(?:[^"\\]|\\.)*"/g, class: 'hl-string' },
+                    { regex: /`[^`]*`/g, class: 'hl-string' },
+                    { regex: new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g'), class: 'hl-key' },
+                    { regex: new RegExp('\\b(' + types.join('|') + ')\\b', 'g'), class: 'hl-null' },
+                    { regex: /\b(-?\d+\.?\d*)\b/g, class: 'hl-number' },
+                    { regex: /\b(true|false|nil)\b/g, class: 'hl-boolean' }
+                ]);
+            } else {
+                outputEl.textContent = text;
             }
-            
-            outputEl.innerHTML = highlighted;
         }
         
         function displayError(error) {
@@ -1494,135 +1050,49 @@
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
         }
-        
-        function highlightJSON(text) {
-            return text
-                .replace(/"([^"]+)":/g, '<span class="hl-key">"$1"</span>:')
-                .replace(/: "([^"]*)"/g, ': <span class="hl-string">"$1"</span>')
-                .replace(/: (-?\d+\.?\d*)/g, ': <span class="hl-number">$1</span>')
-                .replace(/: (true|false)/g, ': <span class="hl-boolean">$1</span>')
-                .replace(/: (null)/g, ': <span class="hl-null">$1</span>')
-                .replace(/([[\]{}])/g, '<span class="hl-bracket">$1</span>');
+
+        function highlightTokens(text, rules) {
+            if (!text) return '';
+            const tokens = [];
+            let lastIndex = 0;
+            
+            try {
+                // Build a single regex by joining all rule regexes with |
+                const combinedRegex = new RegExp(
+                    rules.map((r, i) => `(?<R${i}>${r.regex.source})`).join('|'),
+                    'g' + (rules[0].regex.flags.includes('m') ? 'm' : '') + (rules[0].regex.flags.includes('i') ? 'i' : '')
+                );
+                
+                let match;
+                while ((match = combinedRegex.exec(text)) !== null) {
+                    if (match.index > lastIndex) {
+                        tokens.push(escapeHtml(text.substring(lastIndex, match.index)));
+                    }
+                    
+                    for (let i = 0; i < rules.length; i++) {
+                        const groupName = `R${i}`;
+                        if (match.groups && match.groups[groupName] !== undefined) {
+                            tokens.push(`<span class="${rules[i].class}">${escapeHtml(match.groups[groupName])}</span>`);
+                            break;
+                        }
+                    }
+                    lastIndex = combinedRegex.lastIndex;
+                    if (match.index === combinedRegex.lastIndex) combinedRegex.lastIndex++;
+                }
+            } catch (e) {
+                console.error('Highlight error:', e);
+                return escapeHtml(text);
+            }
+            
+            if (lastIndex < text.length) {
+                tokens.push(escapeHtml(text.substring(lastIndex)));
+            }
+            
+            return tokens.join('');
         }
         
-        function highlightYAML(text) {
-            return text
-                .replace(/^(\s*)([^:\n]+):/gm, '$1<span class="hl-key">$2</span>:')
-                .replace(/#.*/g, '<span class="hl-comment">$&</span>')
-                .replace(/: (true|false|yes|no)$/gm, ': <span class="hl-boolean">$1</span>')
-                .replace(/: (-?\d+\.?\d*)$/gm, ': <span class="hl-number">$1</span>')
-                .replace(/: (null|~)$/gm, ': <span class="hl-null">$1</span>');
-        }
-        
-        function highlightJavaScript(text) {
-            const keywords = ['const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 
-                            'do', 'switch', 'case', 'break', 'continue', 'try', 'catch', 'finally', 
-                            'throw', 'class', 'extends', 'new', 'this', 'super', 'import', 'export', 
-                            'default', 'from', 'async', 'await', 'yield', 'typeof', 'instanceof', 
-                            'in', 'of', 'delete', 'void', 'static', 'get', 'set'];
-            
-            let result = text;
-            
-            // Comments
-            result = result.replace(/(\/\/.*$)/gm, '<span class="hl-comment">$1</span>');
-            result = result.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="hl-comment">$1</span>');
-            
-            // Strings
-            result = result.replace(/("(?:[^"\\]|\\.)*")/g, '<span class="hl-string">$1</span>');
-            result = result.replace(/('(?:[^'\\]|\\.)*')/g, '<span class="hl-string">$1</span>');
-            result = result.replace(/(`(?:[^`\\]|\\.)*`)/g, '<span class="hl-string">$1</span>');
-            
-            // Keywords
-            keywords.forEach(kw => {
-                result = result.replace(new RegExp('\\b(' + kw + ')\\b', 'g'), '<span class="hl-key">$1</span>');
-            });
-            
-            // Numbers
-            result = result.replace(/\b(-?\d+\.?\d*)\b/g, '<span class="hl-number">$1</span>');
-            
-            // Booleans
-            result = result.replace(/\b(true|false|null|undefined|NaN|Infinity)\b/g, '<span class="hl-boolean">$1</span>');
-            
-            return result;
-        }
-        
-        function highlightPython(text) {
-            const keywords = ['def', 'class', 'if', 'elif', 'else', 'for', 'while', 'try', 'except', 
-                            'finally', 'with', 'as', 'import', 'from', 'return', 'yield', 'raise', 
-                            'pass', 'break', 'continue', 'lambda', 'and', 'or', 'not', 'in', 'is', 
-                            'global', 'nonlocal', 'assert', 'del', 'async', 'await'];
-            
-            let result = text;
-            
-            // Comments
-            result = result.replace(/(#.*$)/gm, '<span class="hl-comment">$1</span>');
-            
-            // Docstrings / Multi-line strings
-            result = result.replace(/("""[\s\S]*?""")/g, '<span class="hl-string">$1</span>');
-            result = result.replace(/('''[\s\S]*?''')/g, '<span class="hl-string">$1</span>');
-            
-            // Strings
-            result = result.replace(/("(?:[^"\\]|\\.)*")/g, '<span class="hl-string">$1</span>');
-            result = result.replace(/('(?:[^'\\]|\\.)*')/g, '<span class="hl-string">$1</span>');
-            result = result.replace(/(f"(?:[^"\\]|\\.)*")/g, '<span class="hl-string">$1</span>');
-            result = result.replace(/(f'(?:[^'\\]|\\.)*')/g, '<span class="hl-string">$1</span>');
-            
-            // Keywords
-            keywords.forEach(kw => {
-                result = result.replace(new RegExp('\\b(' + kw + ')\\b', 'g'), '<span class="hl-key">$1</span>');
-            });
-            
-            // Numbers
-            result = result.replace(/\b(-?\d+\.?\d*)\b/g, '<span class="hl-number">$1</span>');
-            
-            // Booleans and None
-            result = result.replace(/\b(True|False|None)\b/g, '<span class="hl-boolean">$1</span>');
-            
-            // Decorators
-            result = result.replace(/(@\w+)/g, '<span class="hl-key">$1</span>');
-            
-            return result;
-        }
-        
-        function highlightGo(text) {
-            const keywords = ['func', 'var', 'const', 'type', 'struct', 'interface', 'map', 'chan',
-                            'if', 'else', 'for', 'range', 'switch', 'case', 'default', 'break', 
-                            'continue', 'return', 'go', 'defer', 'select', 'fallthrough', 'goto',
-                            'package', 'import', 'make', 'new', 'len', 'cap', 'append', 'copy',
-                            'delete', 'panic', 'recover'];
-            
-            let result = text;
-            
-            // Comments
-            result = result.replace(/(\/\/.*$)/gm, '<span class="hl-comment">$1</span>');
-            result = result.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="hl-comment">$1</span>');
-            
-            // Strings
-            result = result.replace(/("(?:[^"\\]|\\.)*")/g, '<span class="hl-string">$1</span>');
-            result = result.replace(/(`[^`]*`)/g, '<span class="hl-string">$1</span>');
-            
-            // Keywords
-            keywords.forEach(kw => {
-                result = result.replace(new RegExp('\\b(' + kw + ')\\b', 'g'), '<span class="hl-key">$1</span>');
-            });
-            
-            // Types
-            const types = ['int', 'int8', 'int16', 'int32', 'int64', 'uint', 'uint8', 'uint16', 
-                          'uint32', 'uint64', 'float32', 'float64', 'complex64', 'complex128',
-                          'bool', 'string', 'byte', 'rune', 'error', 'any'];
-            types.forEach(t => {
-                result = result.replace(new RegExp('\\b(' + t + ')\\b', 'g'), '<span class="hl-null">$1</span>');
-            });
-            
-            // Numbers
-            result = result.replace(/\b(-?\d+\.?\d*)\b/g, '<span class="hl-number">$1</span>');
-            
-            // Booleans
-            result = result.replace(/\b(true|false|nil)\b/g, '<span class="hl-boolean">$1</span>');
-            
-            return result;
-        }
-        
+
+
         function setStatus(type, message) {
             const statusEl = document.getElementById('validationStatus');
             statusEl.className = 'status ' + type;
@@ -1690,6 +1160,3 @@
             link.click();
             URL.revokeObjectURL(link.href);
         }
-    </script>
-</body>
-</html>

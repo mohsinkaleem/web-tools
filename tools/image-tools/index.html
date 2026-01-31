@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Tools - Resize, Crop & Background Removal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p class="loading-text" id="loadingText">Processing image...</p>
+    </div>
+
+    <div class="container">
+        <a href="../../index.html" class="back-link">← Back to Tools</a>
+        
+        <header>
+            <h1>🖼️ Image Tools</h1>
+            <p>Resize, crop, and remove backgrounds from your images - all in the browser</p>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="resize">📐 Resize</button>
+            <button class="tab-btn" data-tab="crop">✂️ Crop</button>
+            <button class="tab-btn" data-tab="bgremove">🎭 Background Removal</button>
+        </div>
+        
+        <!-- Resize Tool -->
+        <div class="tool-section active" id="resize">
+            <div class="card">
+                <h2>Resize Image</h2>
+                
+                <div class="drop-zone" id="resizeDropZone">
+                    <div class="drop-zone-icon">📁</div>
+                    <p>Drag & drop an image here or click to select</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;">Supports JPG, PNG, WebP, GIF</p>
+                    <input type="file" id="resizeInput" accept="image/*">
+                </div>
+                
+                <div id="resizePreview" style="display: none;">
+                    <div class="image-info" id="resizeInfo"></div>
+                    
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>Width (px)</label>
+                            <input type="number" id="resizeWidth" min="1" max="10000">
+                        </div>
+                        <div class="control-group">
+                            <label>Height (px)</label>
+                            <input type="number" id="resizeHeight" min="1" max="10000">
+                        </div>
+                        <div class="control-group">
+                            <label>Scale (%)</label>
+                            <input type="number" id="resizeScale" min="1" max="500" value="100">
+                        </div>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="maintainAspect" checked>
+                        <label for="maintainAspect">Maintain aspect ratio</label>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <label style="color: var(--text-muted); font-size: 0.9rem;">Output Format</label>
+                        <div class="format-options">
+                            <label class="format-option">
+                                <input type="radio" name="resizeFormat" value="image/png" checked> PNG
+                            </label>
+                            <label class="format-option">
+                                <input type="radio" name="resizeFormat" value="image/jpeg"> JPEG
+                            </label>
+                            <label class="format-option">
+                                <input type="radio" name="resizeFormat" value="image/webp"> WebP
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group" id="qualityControl" style="display: none;">
+                        <label>Quality: <span id="qualityValue">90</span>%</label>
+                        <input type="range" class="quality-slider" id="resizeQuality" min="10" max="100" value="90">
+                    </div>
+                    
+                    <div class="preview-container">
+                        <div class="preview-box">
+                            <h3>Original</h3>
+                            <img id="resizeOriginal" alt="Original">
+                        </div>
+                        <div class="preview-box">
+                            <h3>Preview</h3>
+                            <canvas id="resizeCanvas"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="applyResize">Apply Resize</button>
+                        <button class="btn btn-success" id="downloadResize">💾 Download</button>
+                        <button class="btn btn-danger" id="clearResize">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Crop Tool -->
+        <div class="tool-section" id="crop">
+            <div class="card">
+                <h2>Crop Image</h2>
+                
+                <div class="drop-zone" id="cropDropZone">
+                    <div class="drop-zone-icon">📁</div>
+                    <p>Drag & drop an image here or click to select</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;">Supports JPG, PNG, WebP, GIF</p>
+                    <input type="file" id="cropInput" accept="image/*">
+                </div>
+                
+                <div id="cropPreview" style="display: none;">
+                    <div class="image-info" id="cropInfo"></div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="color: var(--text-muted); font-size: 0.9rem;">Aspect Ratio Presets</label>
+                        <div class="aspect-ratios">
+                            <button class="aspect-btn active" data-ratio="free">Free</button>
+                            <button class="aspect-btn" data-ratio="1:1">1:1</button>
+                            <button class="aspect-btn" data-ratio="4:3">4:3</button>
+                            <button class="aspect-btn" data-ratio="16:9">16:9</button>
+                            <button class="aspect-btn" data-ratio="3:2">3:2</button>
+                            <button class="aspect-btn" data-ratio="2:3">2:3</button>
+                        </div>
+                    </div>
+                    
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>X Position</label>
+                            <input type="number" id="cropX" min="0">
+                        </div>
+                        <div class="control-group">
+                            <label>Y Position</label>
+                            <input type="number" id="cropY" min="0">
+                        </div>
+                        <div class="control-group">
+                            <label>Width</label>
+                            <input type="number" id="cropWidth" min="1">
+                        </div>
+                        <div class="control-group">
+                            <label>Height</label>
+                            <input type="number" id="cropHeight" min="1">
+                        </div>
+                    </div>
+                    
+                    <div class="preview-container">
+                        <div class="preview-box">
+                            <h3>Select Crop Area (drag to select)</h3>
+                            <div class="crop-wrapper">
+                                <img id="cropImage" alt="Crop">
+                                <div class="crop-overlay" id="cropOverlay" style="display: none;">
+                                    <div class="crop-handle nw"></div>
+                                    <div class="crop-handle ne"></div>
+                                    <div class="crop-handle sw"></div>
+                                    <div class="crop-handle se"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="preview-box">
+                            <h3>Cropped Preview</h3>
+                            <canvas id="cropCanvas"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="applyCrop">Apply Crop</button>
+                        <button class="btn btn-success" id="downloadCrop">💾 Download</button>
+                        <button class="btn btn-danger" id="clearCrop">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Background Removal Tool -->
+        <div class="tool-section" id="bgremove">
+            <div class="card">
+                <h2>Background Removal</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    Uses AI-powered background removal. Works best with photos of people, products, and objects with clear subjects.
+                </p>
+                
+                <div class="drop-zone" id="bgDropZone">
+                    <div class="drop-zone-icon">📁</div>
+                    <p>Drag & drop an image here or click to select</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;">Supports JPG, PNG, WebP</p>
+                    <input type="file" id="bgInput" accept="image/*">
+                </div>
+                
+                <div id="bgPreview" style="display: none;">
+                    <div class="image-info" id="bgInfo"></div>
+                    
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>Threshold Sensitivity</label>
+                            <input type="range" id="bgThreshold" min="0" max="100" value="50" class="quality-slider">
+                            <small style="color: var(--text-muted);">Adjust to fine-tune background detection</small>
+                        </div>
+                        <div class="control-group">
+                            <label>Background Color (for replacement)</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" id="bgColor" value="#ffffff" style="width: 50px; height: 40px; border: none; cursor: pointer;">
+                                <label class="format-option">
+                                    <input type="checkbox" id="bgTransparent" checked> Transparent
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-container">
+                        <div class="preview-box">
+                            <h3>Original</h3>
+                            <img id="bgOriginal" alt="Original">
+                        </div>
+                        <div class="preview-box" style="background: repeating-conic-gradient(#333 0% 25%, #444 0% 50%) 50% / 20px 20px;">
+                            <h3>Result (Transparency Grid)</h3>
+                            <canvas id="bgCanvas"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="applyBgRemoval">🎭 Remove Background</button>
+                        <button class="btn btn-success" id="downloadBg">💾 Download PNG</button>
+                        <button class="btn btn-danger" id="clearBg">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

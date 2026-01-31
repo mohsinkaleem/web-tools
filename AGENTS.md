@@ -6,7 +6,7 @@ This guide provides instructions for using AI agents to create new web tools for
 
 When requesting a new tool, specify:
 
-1. **Simple code files** - All code should be in one self-contained file whenever possible
+1. **Simple code files**
 2. **No frameworks** - Use vanilla HTML, CSS, and JavaScript (no React, Vue, etc.)
 3. **No backend required** - Tools should work entirely in the browser
 4. **Professional styling** - Clean, modern UI with responsive design

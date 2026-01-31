@@ -52,7 +52,22 @@ Read EPUB books with:
 
 All processing happens locally in your browser. Your files and data never leave your device - there's no server to upload to!
 
-## 🚀 Usage
+## � Project Structure
+
+```
+web-tools/
+├── index.html          # Main landing page
+├── tools/              # All web tool applications
+│   ├── image-tools/
+│   ├── pdf-tools/
+│   ├── text-formatter/
+│   └── python-playground/
+├── README.md           # This file
+├── AGENTS.md           # Guide for creating new tools
+└── LICENSE
+```
+
+## �🚀 Usage
 
 Simply open any HTML file in your web browser. No installation or server required!
 

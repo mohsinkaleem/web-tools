@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Playground - Browser-Based Python Interpreter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← Back to Tools</a>
+        
+        <header>
+            <h1>🐍 Python Playground</h1>
+            <p>Run Python code directly in your browser - powered by Pyodide</p>
+        </header>
+        
+        <div class="status-banner loading" id="statusBanner">
+            <div class="spinner" id="statusSpinner"></div>
+            <span id="statusText">Loading Python environment...</span>
+        </div>
+        
+        <div class="card">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <button class="btn btn-success" id="runBtn" disabled>
+                        ▶️ Run
+                    </button>
+                    <button class="btn btn-secondary" id="clearOutputBtn">
+                        🗑️ Clear Output
+                    </button>
+                    <button class="btn btn-secondary" id="resetBtn">
+                        🔄 Reset
+                    </button>
+                </div>
+                <div class="toolbar-right">
+                    <span class="memory-usage" id="memoryUsage"></span>
+                    <button class="btn btn-secondary" id="downloadBtn">
+                        💾 Download
+                    </button>
+                    <button class="btn btn-secondary" id="shareBtn">
+                        🔗 Share
+                    </button>
+                </div>
+            </div>
+            
+            <div class="editor-container">
+                <div class="editor-panel">
+                    <div class="panel-header">
+                        <span>📝 Code Editor</span>
+                        <span class="status" id="editorStatus">main.py</span>
+                    </div>
+                    <div class="editor-wrapper">
+                        <div class="line-numbers" id="lineNumbers">1</div>
+                        <textarea id="codeEditor" spellcheck="false" placeholder="# Write your Python code here...
+
+print('Hello, World!')
+"></textarea>
+                    </div>
+                </div>
+                
+                <div class="editor-panel">
+                    <div class="panel-header">
+                        <span>📤 Output</span>
+                        <span class="status" id="outputStatus">Ready</span>
+                    </div>
+                    <div id="output">Python output will appear here...</div>
+                </div>
+            </div>
+            
+            <div class="keyboard-hint">
+                <kbd>Ctrl/Cmd + Enter</kbd> Run code &nbsp;|&nbsp;
+                <kbd>Ctrl/Cmd + S</kbd> Download &nbsp;|&nbsp;
+                <kbd>Tab</kbd> Indent
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="packages-panel">
+                <h3>📦 Available Packages (click to import)</h3>
+                <div class="package-tags" id="packageTags">
+                    <span class="package-tag" data-package="numpy">numpy</span>
+                    <span class="package-tag" data-package="pandas">pandas</span>
+                    <span class="package-tag" data-package="matplotlib">matplotlib</span>
+                    <span class="package-tag" data-package="scipy">scipy</span>
+                    <span class="package-tag" data-package="scikit-learn">scikit-learn</span>
+                    <span class="package-tag" data-package="sympy">sympy</span>
+                    <span class="package-tag" data-package="networkx">networkx</span>
+                    <span class="package-tag" data-package="pillow">Pillow</span>
+                    <span class="package-tag" data-package="regex">regex</span>
+                    <span class="package-tag" data-package="pyyaml">PyYAML</span>
+                </div>
+                <div class="install-input">
+                    <input type="text" id="packageInput" placeholder="Enter package name to install (e.g., requests)">
+                    <button class="btn btn-primary" id="installBtn" disabled>📥 Install Package</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="panel-header">
+                <span>📚 Example Code</span>
+            </div>
+            <div class="examples-grid" id="examplesGrid">
+                <div class="example-card" data-example="hello">
+                    <h3>👋 Hello World</h3>
+                    <p>Basic print statements and variables</p>
+                </div>
+                <div class="example-card" data-example="math">
+                    <h3>🔢 Math Operations</h3>
+                    <p>NumPy arrays and calculations</p>
+                </div>
+                <div class="example-card" data-example="data">
+                    <h3>📊 Data Analysis</h3>
+                    <p>Pandas DataFrame manipulation</p>
+                </div>
+                <div class="example-card" data-example="plot">
+                    <h3>📈 Plotting</h3>
+                    <p>Matplotlib chart creation</p>
+                </div>
+                <div class="example-card" data-example="class">
+                    <h3>🏗️ Classes</h3>
+                    <p>Object-oriented programming</p>
+                </div>
+                <div class="example-card" data-example="web">
+                    <h3>🌐 Web Scraping</h3>
+                    <p>Fetch and parse web content</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js" crossorigin="anonymous"></script>
+    <script src="script.js"></script>
+</body>
+</html>
