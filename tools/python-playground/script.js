@@ -1,5 +1,6 @@
 let pyodide = null;
 let isRunning = false;
+let cmEditor = null;
 const installedPackages = new Set(['micropip']);
 
 // Pyodide CDN URL - using official pyodide CDN for better CORS support
@@ -293,7 +294,7 @@ async function runCode() {
     if (!pyodide || isRunning) return;
     
     isRunning = true;
-    const code = document.getElementById('codeEditor').value;
+    const code = cmEditor.getValue();
     const output = document.getElementById('output');
     const outputStatus = document.getElementById('outputStatus');
     
@@ -450,19 +451,94 @@ function updateMemoryUsage() {
 }
 
 // Line numbers
-function updateLineNumbers() {
-    const editor = document.getElementById('codeEditor');
-    const lineNumbers = document.getElementById('lineNumbers');
-    const lines = editor.value.split('\n').length;
-    
-    lineNumbers.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
-}
-
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
     initPyodide();
     
-    const editor = document.getElementById('codeEditor');
+    // Initialize CodeMirror
+    const textArea = document.getElementById('codeEditor');
+    cmEditor = CodeMirror.fromTextArea(textArea, {
+        mode: 'python',
+        theme: 'dracula',
+        lineNumbers: true,
+        autoCloseBrackets: true,
+        matchBrackets: true,
+        indentUnit: 4,
+        tabSize: 4,
+        lineWrapping: true,
+        extraKeys: {
+            "Ctrl-Enter": runCode,
+            "Cmd-Enter": runCode
+        }
+    });
+    
+    // REPL Shell Toggle
+    const toggleReplBtn = document.getElementById('toggleReplBtn');
+    const replShell = document.getElementById('replShell');
+    toggleReplBtn.addEventListener('click', () => {
+        const isHidden = replShell.style.display === 'none';
+        replShell.style.display = isHidden ? 'block' : 'none';
+        toggleReplBtn.textContent = isHidden ? '⌨️ Hide REPL Shell' : '⌨️ Show REPL Shell';
+        if (isHidden) document.getElementById('replInput').focus();
+    });
+
+    // REPL Input Handling
+    const replInput = document.getElementById('replInput');
+    const replHistory = document.getElementById('replHistory');
+    replInput.addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter' && replInput.value.trim()) {
+            const cmd = replInput.value;
+            replInput.value = '';
+            
+            // Add to history display
+            const cmdDiv = document.createElement('div');
+            cmdDiv.className = 'repl-line';
+            cmdDiv.innerHTML = `<span class="repl-prompt">>>></span> <span class="repl-cmd">${escapeHtml(cmd)}</span>`;
+            replHistory.appendChild(cmdDiv);
+            
+            if (!pyodide) return;
+            
+            try {
+                // Intercept stdout/stderr
+                pyodide.runPython('_stdout_capture.clear(); _stderr_capture.clear()');
+                
+                // Result of execution
+                let result = await pyodide.runPythonAsync(cmd);
+                
+                const stdout = pyodide.runPython('_stdout_capture.getvalue()');
+                const stderr = pyodide.runPython('_stderr_capture.getvalue()');
+                
+                if (stdout) {
+                    const outDiv = document.createElement('div');
+                    outDiv.className = 'repl-line repl-res';
+                    outDiv.textContent = stdout;
+                    replHistory.appendChild(outDiv);
+                }
+                
+                if (stderr) {
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'repl-line output-error';
+                    errDiv.textContent = stderr;
+                    replHistory.appendChild(errDiv);
+                }
+                
+                if (result !== undefined) {
+                    const resDiv = document.createElement('div');
+                    resDiv.className = 'repl-line repl-res';
+                    resDiv.textContent = result;
+                    replHistory.appendChild(resDiv);
+                }
+            } catch (err) {
+                const errDiv = document.createElement('div');
+                errDiv.className = 'repl-line output-error';
+                errDiv.textContent = err.message;
+                replHistory.appendChild(errDiv);
+            }
+            
+            replShell.scrollTop = replShell.scrollHeight;
+            document.getElementById('output').scrollTop = document.getElementById('output').scrollHeight;
+        }
+    });
     
     // Run button
     document.getElementById('runBtn').addEventListener('click', runCode);
@@ -470,6 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear output
     document.getElementById('clearOutputBtn').addEventListener('click', () => {
         document.getElementById('output').innerHTML = 'Python output will appear here...';
+        replHistory.innerHTML = '';
         document.getElementById('outputStatus').textContent = 'Ready';
         document.getElementById('outputStatus').style.color = '';
     });
@@ -483,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Download
     document.getElementById('downloadBtn').addEventListener('click', () => {
-        const code = editor.value;
+        const code = cmEditor.getValue();
         const blob = new Blob([code], { type: 'text/python' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -494,7 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Share (encode in URL)
     document.getElementById('shareBtn').addEventListener('click', () => {
-        const code = editor.value;
+        const code = cmEditor.getValue();
         const encoded = btoa(encodeURIComponent(code));
         const url = `${location.origin}${location.pathname}?code=${encoded}`;
         navigator.clipboard.writeText(url).then(() => {
@@ -528,8 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             const importStmt = importMap[pkg] || `import ${pkg}`;
-            editor.value = importStmt + '\n\n' + editor.value;
-            updateLineNumbers();
+            cmEditor.setValue(importStmt + '\n\n' + cmEditor.getValue());
         });
     });
     
@@ -538,41 +614,10 @@ document.addEventListener('DOMContentLoaded', () => {
         card.addEventListener('click', () => {
             const example = card.dataset.example;
             if (examples[example]) {
-                editor.value = examples[example];
-                updateLineNumbers();
+                cmEditor.setValue(examples[example]);
                 document.getElementById('output').innerHTML = 'Click "Run" to execute the code...';
             }
         });
-    });
-    
-    // Editor events
-    editor.addEventListener('input', updateLineNumbers);
-    editor.addEventListener('scroll', () => {
-        document.getElementById('lineNumbers').scrollTop = editor.scrollTop;
-    });
-    
-    // Tab handling
-    editor.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab') {
-            e.preventDefault();
-            const start = editor.selectionStart;
-            const end = editor.selectionEnd;
-            editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
-            editor.selectionStart = editor.selectionEnd = start + 4;
-            updateLineNumbers();
-        }
-        
-        // Ctrl/Cmd + Enter to run
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            e.preventDefault();
-            runCode();
-        }
-        
-        // Ctrl/Cmd + S to download
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-            e.preventDefault();
-            document.getElementById('downloadBtn').click();
-        }
     });
     
     // Check for shared code in URL
@@ -580,12 +625,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (params.has('code')) {
         try {
             const code = decodeURIComponent(atob(params.get('code')));
-            editor.value = code;
-            updateLineNumbers();
+            cmEditor.setValue(code);
         } catch (e) {
             console.error('Failed to decode shared code');
         }
     }
-    
-    updateLineNumbers();
 });

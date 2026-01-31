@@ -141,22 +141,23 @@ header p {
 }
 
 textarea {
+    display: none;
+}
+
+.CodeMirror {
     width: 100%;
-    height: 500px;
-    padding: 15px;
-    background: var(--bg);
+    height: 500px !important;
+    background: var(--bg) !important;
     border: 1px solid var(--border);
     border-radius: 8px;
     color: var(--text);
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 14px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+    font-size: 14px !important;
     line-height: 1.5;
-    resize: vertical;
 }
 
-textarea:focus {
-    outline: none;
-    border-color: var(--primary);
+.CodeMirror-focused {
+    border-color: var(--primary) !important;
 }
 
 .output-display {

@@ -1,4 +1,23 @@
 let currentFormat = 'json';
+let inputCm = null;
+
+// Helper to update CodeMirror mode
+function updateCmMode(format) {
+    if (!inputCm) return;
+    const modeMap = {
+        'json': { name: 'javascript', json: true },
+        'yaml': 'yaml',
+        'markdown': 'markdown',
+        'xml': 'xml',
+        'html': 'xml', // xml mode handles html well
+        'css': 'css',
+        'sql': 'sql',
+        'javascript': 'javascript',
+        'python': 'python',
+        'go': 'go'
+    };
+    inputCm.setOption('mode', modeMap[format] || 'text/plain');
+}
         
         // Format configurations
         const formatConfig = {
@@ -102,12 +121,27 @@ let currentFormat = 'json';
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            const textArea = document.getElementById('inputEditor');
+            inputCm = CodeMirror.fromTextArea(textArea, {
+                mode: { name: 'javascript', json: true },
+                theme: 'dracula',
+                lineNumbers: true,
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                indentUnit: 2,
+                tabSize: 2,
+                lineWrapping: true
+            });
+            inputCm.on('change', () => {
+                updateStats();
+            });
+
             setupFormatButtons();
             setupButtons();
             setupDropZone();
             updateOptions();
             
-            document.getElementById('inputEditor').addEventListener('input', updateStats);
+            updateStats();
         });
         
         function setupFormatButtons() {
@@ -116,6 +150,7 @@ let currentFormat = 'json';
                     document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentFormat = btn.dataset.format;
+                    updateCmMode(currentFormat);
                     updateOptions();
                     clearOutput();
                 });
@@ -164,8 +199,7 @@ let currentFormat = 'json';
         function loadFile(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                document.getElementById('inputEditor').value = e.target.result;
-                updateStats();
+                inputCm.setValue(e.target.result);
                 
                 // Auto-detect format
                 const ext = file.name.split('.').pop().toLowerCase();
@@ -181,6 +215,7 @@ let currentFormat = 'json';
                     document.querySelectorAll('.format-btn').forEach(b => {
                         b.classList.toggle('active', b.dataset.format === currentFormat);
                     });
+                    updateCmMode(currentFormat);
                     updateOptions();
                 }
             };
@@ -224,7 +259,7 @@ let currentFormat = 'json';
         }
         
         function formatCode() {
-            const input = document.getElementById('inputEditor').value.trim();
+            const input = inputCm.getValue().trim();
             if (!input) return;
             
             try {
@@ -293,7 +328,7 @@ let currentFormat = 'json';
         }
         
         function minifyCode() {
-            const input = document.getElementById('inputEditor').value.trim();
+            const input = inputCm.getValue().trim();
             if (!input) return;
             
             try {
@@ -352,7 +387,7 @@ let currentFormat = 'json';
         }
         
         function validateCode() {
-            const input = document.getElementById('inputEditor').value.trim();
+            const input = inputCm.getValue().trim();
             if (!input) return;
             
             try {
@@ -389,7 +424,7 @@ let currentFormat = 'json';
         }
         
         function showConvertOptions() {
-            const input = document.getElementById('inputEditor').value.trim();
+            const input = inputCm.getValue().trim();
             if (!input) return;
             
             const conversions = {
@@ -1100,7 +1135,7 @@ let currentFormat = 'json';
         }
         
         function updateStats() {
-            const input = document.getElementById('inputEditor').value;
+            const input = inputCm.getValue();
             const lines = input.split('\n').length;
             const chars = input.length;
             document.getElementById('stats').textContent = `Lines: ${lines} | Characters: ${chars}`;
@@ -1113,21 +1148,20 @@ let currentFormat = 'json';
         }
         
         function clearAll() {
-            document.getElementById('inputEditor').value = '';
+            inputCm.setValue('');
             clearOutput();
             updateStats();
         }
         
         function loadSample() {
-            document.getElementById('inputEditor').value = formatConfig[currentFormat].sample;
+            inputCm.setValue(formatConfig[currentFormat].sample);
             updateStats();
         }
         
         async function pasteFromClipboard() {
             try {
                 const text = await navigator.clipboard.readText();
-                document.getElementById('inputEditor').value = text;
-                updateStats();
+                inputCm.setValue(text);
             } catch (error) {
                 alert('Unable to read from clipboard. Please paste manually.');
             }

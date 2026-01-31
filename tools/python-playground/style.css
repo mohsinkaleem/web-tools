@@ -221,33 +221,103 @@ header p {
     flex: 1;
     position: relative;
     display: flex;
+    overflow: hidden;
+}
+
+.output-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-editor);
+}
+
+#output {
+    flex: 1;
+    padding: 15px;
+    font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    font-size: 0.9rem;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    border-bottom: 1px solid var(--border);
+}
+
+.repl-shell {
+    padding: 10px 15px;
+    background: rgba(0, 0, 0, 0.3);
+    font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    font-size: 0.9rem;
+}
+
+.repl-input-line {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.repl-prompt {
+    color: var(--python-yellow);
+    font-weight: bold;
+    user-select: none;
+}
+
+#replInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.repl-line {
+    margin-bottom: 4px;
+}
+
+.repl-cmd {
+    color: var(--text-muted);
+}
+
+.repl-res {
+    color: var(--text);
+}
+
+.panel-footer {
+    padding: 8px 15px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0;
+}
+
+.btn-text:hover {
+    text-decoration: underline;
+}
+
+/* CodeMirror Adjustments */
+.CodeMirror {
+    height: 100% !important;
+    font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace !important;
+    font-size: 0.95rem !important;
+    background: transparent !important;
 }
 
 .line-numbers {
-    padding: 15px 10px;
-    background: var(--bg);
-    color: var(--text-muted);
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    text-align: right;
-    user-select: none;
-    border-right: 1px solid var(--border);
-    min-width: 50px;
+    display: none;
 }
 
 #codeEditor {
-    flex: 1;
-    padding: 15px;
-    background: var(--bg-editor);
-    border: none;
-    color: var(--text);
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    resize: none;
-    outline: none;
-    tab-size: 4;
+    display: none;
+}
 }
 
 #output {
@@ -263,8 +333,17 @@ header p {
     word-wrap: break-word;
 }
 
+/* Error Styling - Transparent background */
 .output-error {
-    color: #f85149;
+    display: block;
+    margin: 10px 0;
+    padding: 12px;
+    background: rgba(239, 68, 68, 0.15); /* Transparent red */
+    border-left: 4px solid var(--danger);
+    color: #f87171;
+    border-radius: 4px;
+    backdrop-filter: blur(2px);
+    white-space: pre-wrap;
 }
 
 .output-success {

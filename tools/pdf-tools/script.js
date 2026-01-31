@@ -64,8 +64,20 @@ let viewMode = 'single';
 function initViewer() {
     setupDropZone('viewerDropZone', 'viewerInput', (files) => loadPdf(files[0]));
     
-    document.getElementById('prevPage').addEventListener('click', () => goToPage(currentPage - 1));
-    document.getElementById('nextPage').addEventListener('click', () => goToPage(currentPage + 1));
+    document.getElementById('prevPage').addEventListener('click', () => {
+        if (viewMode === 'continuous') {
+            goToPage(currentPage - 20);
+        } else {
+            goToPage(currentPage - 1);
+        }
+    });
+    document.getElementById('nextPage').addEventListener('click', () => {
+        if (viewMode === 'continuous') {
+            goToPage(currentPage + 20);
+        } else {
+            goToPage(currentPage + 1);
+        }
+    });
     document.getElementById('pageNum').addEventListener('change', (e) => goToPage(parseInt(e.target.value)));
     document.getElementById('zoomLevel').addEventListener('change', () => renderCurrentView());
     document.getElementById('viewMode').addEventListener('change', (e) => {
@@ -192,18 +204,19 @@ async function renderCurrentView() {
     if (viewMode === 'single') {
         await renderPage(currentPage, container);
     } else {
-        // Continuous mode - render a limited number of pages for performance
-        const maxContinuousPages = 20;
+        // Continuous mode - render 20 pages starting from current page
+        const pagesToRender = 20;
         const totalPages = pdfDoc.numPages;
+        const endPage = Math.min(currentPage + pagesToRender - 1, totalPages);
         
-        if (totalPages > maxContinuousPages) {
+        if (totalPages > pagesToRender) {
             const warning = document.createElement('div');
             warning.className = 'view-warning';
-            warning.textContent = `Displaying first ${maxContinuousPages} pages of ${totalPages}. Use Single Page mode to view all pages.`;
+            warning.textContent = `Displaying pages ${currentPage} to ${endPage} of ${totalPages}.`;
             container.appendChild(warning);
         }
         
-        for (let i = 1; i <= Math.min(totalPages, maxContinuousPages); i++) {
+        for (let i = currentPage; i <= endPage; i++) {
             await renderPage(i, container);
         }
     }
@@ -675,14 +688,13 @@ async function loadEpub(file) {
     showLoading('Loading EPUB...');
     
     try {
-        const arrayBuffer = await file.arrayBuffer();
-        
         // Clean up previous book
         if (book) {
             book.destroy();
         }
         
-        book = ePub(arrayBuffer);
+        // Use Blob/File directly which is more robust
+        book = ePub(file);
         
         // Wait for book to be ready
         await book.ready;

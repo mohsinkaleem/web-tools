@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Python Playground - Browser-Based Python Interpreter</title>
     <link rel="stylesheet" href="style.css">
+    <!-- CodeMirror for advanced editor features -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -51,7 +58,6 @@
                         <span class="status" id="editorStatus">main.py</span>
                     </div>
                     <div class="editor-wrapper">
-                        <div class="line-numbers" id="lineNumbers">1</div>
                         <textarea id="codeEditor" spellcheck="false" placeholder="# Write your Python code here...
 
 print('Hello, World!')
@@ -61,10 +67,22 @@ print('Hello, World!')
                 
                 <div class="editor-panel">
                     <div class="panel-header">
-                        <span>📤 Output</span>
+                        <span>📤 Output & Shell</span>
                         <span class="status" id="outputStatus">Ready</span>
                     </div>
-                    <div id="output">Python output will appear here...</div>
+                    <div id="outputContainer" class="output-container">
+                        <div id="output">Python output will appear here...</div>
+                        <div id="replShell" class="repl-shell" style="display: none;">
+                            <div id="replHistory"></div>
+                            <div class="repl-input-line">
+                                <span class="repl-prompt">>>></span>
+                                <input type="text" id="replInput" placeholder="Enter Python command..." spellcheck="false">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-footer">
+                        <button class="btn-text" id="toggleReplBtn">⌨️ Show REPL Shell</button>
+                    </div>
                 </div>
             </div>
             
