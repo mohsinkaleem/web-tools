@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF & Document Tools</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
     <style>
         :root {
             --primary: #ef4444;
@@ -172,6 +173,15 @@
             background: #475569;
         }
         
+        .btn-warning {
+            background: var(--warning);
+            color: #000;
+        }
+        
+        .btn-warning:hover {
+            background: #d97706;
+        }
+        
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -198,15 +208,15 @@
             color: var(--primary);
         }
         
-        /* PDF Viewer Styles */
+        /* Enhanced PDF Viewer Styles */
         .pdf-viewer-container {
             display: flex;
             gap: 20px;
-            height: 70vh;
+            height: 75vh;
         }
         
         .pdf-sidebar {
-            width: 200px;
+            width: 180px;
             background: var(--bg);
             border-radius: 8px;
             padding: 10px;
@@ -220,6 +230,7 @@
             border: 2px solid transparent;
             border-radius: 4px;
             transition: border-color 0.2s;
+            position: relative;
         }
         
         .pdf-thumbnail:hover, .pdf-thumbnail.active {
@@ -280,12 +291,15 @@
             background: var(--bg);
             border-radius: 8px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
             padding: 20px;
+            gap: 10px;
         }
         
-        #pdfCanvas {
+        .pdf-canvas-container canvas {
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            max-width: 100%;
         }
         
         /* PDF Merge Styles */
@@ -349,15 +363,15 @@
             font-size: 1.2rem;
         }
         
-        /* EPUB Reader Styles */
+        /* EPUB Reader Styles - Enhanced with epub.js */
         .epub-container {
             display: flex;
             gap: 20px;
-            height: 70vh;
+            height: 75vh;
         }
         
         .epub-toc {
-            width: 250px;
+            width: 280px;
             background: var(--bg);
             border-radius: 8px;
             padding: 15px;
@@ -372,11 +386,12 @@
         }
         
         .toc-item {
-            padding: 8px 12px;
+            padding: 10px 12px;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 6px;
             margin-bottom: 5px;
             transition: background 0.2s;
+            font-size: 0.95rem;
         }
         
         .toc-item:hover {
@@ -387,23 +402,40 @@
             background: var(--primary);
         }
         
+        .toc-item.nested {
+            padding-left: 24px;
+            font-size: 0.9rem;
+        }
+        
+        .epub-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        
         .epub-content {
             flex: 1;
             background: #fff;
             color: #1a1a1a;
             border-radius: 8px;
-            padding: 40px;
-            overflow-y: auto;
-            font-size: 1.1rem;
-            line-height: 1.8;
+            overflow: hidden;
+            position: relative;
         }
         
-        .epub-content h1, .epub-content h2, .epub-content h3 {
-            margin: 1em 0 0.5em;
+        .epub-content.dark {
+            background: #1e1e1e;
+            color: #e0e0e0;
         }
         
-        .epub-content p {
-            margin-bottom: 1em;
+        .epub-content.sepia {
+            background: #f4ecd8;
+            color: #5c4b37;
+        }
+        
+        #epub-reader {
+            width: 100%;
+            height: 100%;
         }
         
         .epub-controls {
@@ -411,6 +443,9 @@
             gap: 15px;
             align-items: center;
             margin-bottom: 15px;
+            padding: 15px;
+            background: var(--bg);
+            border-radius: 8px;
             flex-wrap: wrap;
         }
         
@@ -420,10 +455,89 @@
         
         .epub-controls select, .epub-controls input {
             padding: 8px 12px;
-            background: var(--bg);
+            background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 4px;
             color: var(--text);
+        }
+        
+        .epub-nav-btns {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+        
+        .chapter-progress {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .chapter-progress input[type="range"] {
+            flex: 1;
+            accent-color: var(--primary);
+        }
+        
+        .chapter-progress span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            min-width: 40px;
+        }
+        
+        /* PDF Password Remover Styles */
+        .password-input-group {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .password-input-group input[type="password"] {
+            flex: 1;
+            min-width: 250px;
+            padding: 15px 20px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 1rem;
+        }
+        
+        .password-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .password-status {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .password-status.encrypted {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid var(--warning);
+        }
+        
+        .password-status.unlocked {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid var(--success);
+        }
+        
+        .password-status.no-password {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid #3b82f6;
+        }
+        
+        .password-status .icon {
+            font-size: 1.5rem;
         }
         
         .loading-overlay {
@@ -505,13 +619,14 @@
         
         <header>
             <h1>📄 PDF & Document Tools</h1>
-            <p>View, merge PDFs and read EPUB books - all in your browser</p>
+            <p>View, merge, split PDFs, remove passwords, and read EPUB books - all in your browser</p>
         </header>
         
         <div class="tabs">
             <button class="tab-btn active" data-tab="viewer">📖 PDF Viewer</button>
             <button class="tab-btn" data-tab="merge">🔗 Merge PDFs</button>
             <button class="tab-btn" data-tab="split">✂️ Split PDF</button>
+            <button class="tab-btn" data-tab="unlock">🔓 Remove Password</button>
             <button class="tab-btn" data-tab="epub">📚 EPUB Reader</button>
         </div>
         
@@ -547,13 +662,21 @@
                                     <option value="1.25">125%</option>
                                     <option value="1.5">150%</option>
                                     <option value="2">200%</option>
+                                    <option value="fit-width">Fit Width</option>
+                                    <option value="fit-page">Fit Page</option>
                                 </select>
                                 
+                                <select id="viewMode">
+                                    <option value="single">Single Page</option>
+                                    <option value="continuous">Continuous</option>
+                                </select>
+                                
+                                <button class="btn btn-secondary" id="rotatePdf">🔄 Rotate</button>
                                 <button class="btn btn-primary" id="downloadPdf">💾 Download</button>
                             </div>
                             
-                            <div class="pdf-canvas-container">
-                                <canvas id="pdfCanvas"></canvas>
+                            <div class="pdf-canvas-container" id="pdfCanvasContainer">
+                                <!-- Canvases will be created dynamically -->
                             </div>
                         </div>
                     </div>
@@ -624,7 +747,10 @@
         <!-- EPUB Reader -->
         <div class="tool-section" id="epub">
             <div class="card">
-                <h2>EPUB Reader</h2>
+                <h2>📚 EPUB Reader</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    Read EPUB books with a beautiful, customizable reading experience powered by epub.js
+                </p>
                 
                 <div class="drop-zone" id="epubDropZone">
                     <div class="drop-zone-icon">📚</div>
@@ -638,10 +764,10 @@
                     <div class="epub-controls">
                         <label>Font Size:</label>
                         <select id="epubFontSize">
-                            <option value="14">Small</option>
-                            <option value="18" selected>Medium</option>
-                            <option value="22">Large</option>
-                            <option value="26">X-Large</option>
+                            <option value="80">Small</option>
+                            <option value="100" selected>Medium</option>
+                            <option value="120">Large</option>
+                            <option value="140">X-Large</option>
                         </select>
                         
                         <label>Theme:</label>
@@ -651,16 +777,76 @@
                             <option value="dark">Dark</option>
                         </select>
                         
-                        <button class="btn btn-secondary" id="prevChapter">← Prev Chapter</button>
-                        <button class="btn btn-secondary" id="nextChapter">Next Chapter →</button>
+                        <label>Font:</label>
+                        <select id="epubFont">
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Times New Roman', serif">Times</option>
+                            <option value="-apple-system, sans-serif">System</option>
+                            <option value="'Courier New', monospace">Monospace</option>
+                        </select>
+                        
+                        <div class="epub-nav-btns">
+                            <button class="btn btn-secondary" id="prevChapter">← Prev</button>
+                            <button class="btn btn-secondary" id="nextChapter">Next →</button>
+                        </div>
                     </div>
                     
                     <div class="epub-container">
                         <div class="epub-toc" id="epubToc">
-                            <h3>Table of Contents</h3>
+                            <h3>📖 Table of Contents</h3>
                             <div id="tocList"></div>
                         </div>
-                        <div class="epub-content" id="epubReader"></div>
+                        <div class="epub-main">
+                            <div class="epub-content" id="epubReaderContainer">
+                                <div id="epub-reader"></div>
+                            </div>
+                            <div class="chapter-progress">
+                                <span id="currentPercent">0%</span>
+                                <input type="range" id="progressSlider" min="0" max="100" value="0">
+                                <span id="totalPercent">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PDF Password Remover -->
+        <div class="tool-section" id="unlock">
+            <div class="card">
+                <h2>🔓 PDF Password Remover</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    Remove password protection from PDF files. You'll need to know the password to unlock.
+                </p>
+                
+                <div class="drop-zone" id="unlockDropZone">
+                    <div class="drop-zone-icon">🔒</div>
+                    <p>Drag & drop a password-protected PDF here or click to select</p>
+                    <input type="file" id="unlockInput" accept=".pdf,application/pdf">
+                </div>
+                
+                <div id="unlockContent" style="display: none;">
+                    <div class="file-info" id="unlockInfo"></div>
+                    
+                    <div class="password-status" id="passwordStatus">
+                        <span class="icon">🔒</span>
+                        <div>
+                            <strong>Status: </strong><span id="statusText">Checking...</span>
+                        </div>
+                    </div>
+                    
+                    <div id="passwordSection">
+                        <div class="password-input-group">
+                            <input type="password" id="pdfPassword" placeholder="Enter PDF password">
+                            <button class="btn btn-warning" id="unlockPdf">🔓 Unlock & Remove Password</button>
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">
+                            💡 The unlocked PDF will have no password protection and can be opened freely.
+                        </p>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" id="clearUnlock">Clear</button>
                     </div>
                 </div>
             </div>
@@ -670,7 +856,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
         // Configure PDF.js worker
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
 
         // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -725,10 +911,12 @@
             });
         }
 
-        // ==================== PDF VIEWER ====================
+        // ==================== ENHANCED PDF VIEWER ====================
         let pdfDoc = null;
         let currentPage = 1;
         let pdfData = null;
+        let currentRotation = 0;
+        let viewMode = 'single';
 
         function initViewer() {
             setupDropZone('viewerDropZone', 'viewerInput', (files) => loadPdf(files[0]));
@@ -736,17 +924,42 @@
             document.getElementById('prevPage').addEventListener('click', () => goToPage(currentPage - 1));
             document.getElementById('nextPage').addEventListener('click', () => goToPage(currentPage + 1));
             document.getElementById('pageNum').addEventListener('change', (e) => goToPage(parseInt(e.target.value)));
-            document.getElementById('zoomLevel').addEventListener('change', () => renderPage(currentPage));
+            document.getElementById('zoomLevel').addEventListener('change', () => renderCurrentView());
+            document.getElementById('viewMode').addEventListener('change', (e) => {
+                viewMode = e.target.value;
+                renderCurrentView();
+            });
+            document.getElementById('rotatePdf').addEventListener('click', () => {
+                currentRotation = (currentRotation + 90) % 360;
+                renderCurrentView();
+            });
             document.getElementById('downloadPdf').addEventListener('click', downloadCurrentPdf);
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (pdfDoc && document.getElementById('viewerContent').style.display !== 'none') {
+                    if (e.key === 'ArrowLeft' || e.key === 'PageUp') goToPage(currentPage - 1);
+                    if (e.key === 'ArrowRight' || e.key === 'PageDown') goToPage(currentPage + 1);
+                    if (e.key === 'Home') goToPage(1);
+                    if (e.key === 'End') goToPage(pdfDoc.numPages);
+                }
+            });
         }
 
-        async function loadPdf(file) {
+        async function loadPdf(file, password = null) {
             showLoading('Loading PDF...');
             
             try {
                 const arrayBuffer = await file.arrayBuffer();
                 pdfData = arrayBuffer;
-                pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                
+                const loadingTask = pdfjsLib.getDocument({
+                    data: arrayBuffer,
+                    password: password
+                });
+                
+                pdfDoc = await loadingTask.promise;
+                currentRotation = 0;
                 
                 document.getElementById('totalPages').textContent = pdfDoc.numPages;
                 document.getElementById('pageNum').max = pdfDoc.numPages;
@@ -762,6 +975,13 @@
                 await goToPage(1);
             } catch (error) {
                 console.error('Error loading PDF:', error);
+                if (error.name === 'PasswordException') {
+                    const pwd = prompt('This PDF is password protected. Please enter the password:');
+                    if (pwd) {
+                        await loadPdf(file, pwd);
+                        return;
+                    }
+                }
                 alert('Error loading PDF. Please make sure it\'s a valid PDF file.');
             }
             
@@ -772,9 +992,9 @@
             const sidebar = document.getElementById('pdfSidebar');
             sidebar.innerHTML = '';
             
-            for (let i = 1; i <= pdfDoc.numPages; i++) {
+            for (let i = 1; i <= Math.min(pdfDoc.numPages, 50); i++) { // Limit thumbnails for performance
                 const page = await pdfDoc.getPage(i);
-                const viewport = page.getViewport({ scale: 0.2 });
+                const viewport = page.getViewport({ scale: 0.15 });
                 
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -790,11 +1010,18 @@
                 
                 const label = document.createElement('div');
                 label.className = 'pdf-thumbnail-label';
-                label.textContent = `Page ${i}`;
+                label.textContent = `${i}`;
                 thumbDiv.appendChild(label);
                 
                 thumbDiv.addEventListener('click', () => goToPage(i));
                 sidebar.appendChild(thumbDiv);
+            }
+            
+            if (pdfDoc.numPages > 50) {
+                const moreLabel = document.createElement('div');
+                moreLabel.style.cssText = 'text-align: center; padding: 10px; color: var(--text-muted); font-size: 0.85rem;';
+                moreLabel.textContent = `... and ${pdfDoc.numPages - 50} more pages`;
+                sidebar.appendChild(moreLabel);
             }
         }
 
@@ -812,15 +1039,46 @@
                 activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
             
-            await renderPage(num);
+            await renderCurrentView();
         }
 
-        async function renderPage(num) {
-            const page = await pdfDoc.getPage(num);
-            const scale = parseFloat(document.getElementById('zoomLevel').value);
-            const viewport = page.getViewport({ scale: scale * 1.5 });
+        async function renderCurrentView() {
+            const container = document.getElementById('pdfCanvasContainer');
+            container.innerHTML = '';
             
-            const canvas = document.getElementById('pdfCanvas');
+            if (viewMode === 'single') {
+                await renderPage(currentPage, container);
+            } else {
+                // Continuous mode - render visible pages
+                for (let i = 1; i <= pdfDoc.numPages; i++) {
+                    await renderPage(i, container);
+                }
+            }
+        }
+
+        async function renderPage(num, container) {
+            const page = await pdfDoc.getPage(num);
+            let zoomValue = document.getElementById('zoomLevel').value;
+            let scale = 1.5;
+            
+            const containerWidth = container.clientWidth - 40;
+            const containerHeight = container.clientHeight - 40;
+            const originalViewport = page.getViewport({ scale: 1, rotation: currentRotation });
+            
+            if (zoomValue === 'fit-width') {
+                scale = containerWidth / originalViewport.width;
+            } else if (zoomValue === 'fit-page') {
+                const scaleX = containerWidth / originalViewport.width;
+                const scaleY = containerHeight / originalViewport.height;
+                scale = Math.min(scaleX, scaleY);
+            } else {
+                scale = parseFloat(zoomValue) * 1.5;
+            }
+            
+            const viewport = page.getViewport({ scale: scale, rotation: currentRotation });
+            
+            const canvas = document.createElement('canvas');
+            canvas.id = `page-${num}`;
             const ctx = canvas.getContext('2d');
             
             canvas.width = viewport.width;
@@ -830,6 +1088,8 @@
                 canvasContext: ctx,
                 viewport: viewport
             }).promise;
+            
+            container.appendChild(canvas);
         }
 
         function downloadCurrentPdf() {
@@ -1080,82 +1340,215 @@
             document.getElementById('splitContent').style.display = 'none';
         }
 
-        // ==================== EPUB READER ====================
-        let epubData = null;
-        let epubChapters = [];
-        let currentChapter = 0;
+        // ==================== PDF PASSWORD REMOVER ====================
+        let unlockPdfFile = null;
+        let unlockPdfData = null;
+
+        function initUnlock() {
+            setupDropZone('unlockDropZone', 'unlockInput', (files) => loadUnlockPdf(files[0]));
+            
+            document.getElementById('unlockPdf').addEventListener('click', removePassword);
+            document.getElementById('clearUnlock').addEventListener('click', clearUnlock);
+            document.getElementById('pdfPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') removePassword();
+            });
+        }
+
+        async function loadUnlockPdf(file) {
+            showLoading('Checking PDF...');
+            unlockPdfFile = file;
+            
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                unlockPdfData = arrayBuffer;
+                
+                document.getElementById('unlockInfo').innerHTML = 
+                    `File: <span>${file.name}</span> | Size: <span>${formatFileSize(file.size)}</span>`;
+                
+                document.getElementById('unlockContent').style.display = 'block';
+                
+                // Try to open without password to check if it's encrypted
+                try {
+                    const { PDFDocument } = PDFLib;
+                    await PDFDocument.load(arrayBuffer);
+                    
+                    // PDF opened successfully - no password
+                    const statusEl = document.getElementById('passwordStatus');
+                    statusEl.className = 'password-status no-password';
+                    statusEl.innerHTML = '<span class="icon">📄</span><div><strong>Status: </strong>This PDF is not password protected.</div>';
+                    document.getElementById('passwordSection').style.display = 'none';
+                } catch (e) {
+                    // PDF is likely encrypted
+                    const statusEl = document.getElementById('passwordStatus');
+                    statusEl.className = 'password-status encrypted';
+                    statusEl.innerHTML = '<span class="icon">🔒</span><div><strong>Status: </strong>This PDF is password protected. Enter the password below to unlock.</div>';
+                    document.getElementById('passwordSection').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('Error loading PDF file.');
+            }
+            
+            hideLoading();
+        }
+
+        async function removePassword() {
+            const password = document.getElementById('pdfPassword').value;
+            if (!password) {
+                alert('Please enter the PDF password.');
+                return;
+            }
+            
+            showLoading('Removing password protection...');
+            
+            try {
+                // First, try to open with pdf.js to decrypt
+                const loadingTask = pdfjsLib.getDocument({
+                    data: unlockPdfData,
+                    password: password
+                });
+                
+                const pdfDocument = await loadingTask.promise;
+                
+                // Get the decrypted data by re-saving with pdf-lib
+                // We need to render and recreate since pdf-lib can't directly remove encryption
+                const { PDFDocument } = PDFLib;
+                
+                // Try loading with password
+                const pdfDoc = await PDFDocument.load(unlockPdfData, {
+                    password: password,
+                    ignoreEncryption: false
+                });
+                
+                // Save without encryption
+                const unlockedBytes = await pdfDoc.save();
+                
+                // Download the unlocked PDF
+                const blob = new Blob([unlockedBytes], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `unlocked-${unlockPdfFile.name}`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+                
+                // Update status
+                const statusEl = document.getElementById('passwordStatus');
+                statusEl.className = 'password-status unlocked';
+                statusEl.innerHTML = '<span class="icon">✅</span><div><strong>Success! </strong>Password removed. The unlocked PDF has been downloaded.</div>';
+                document.getElementById('passwordSection').style.display = 'none';
+                
+            } catch (error) {
+                console.error('Error removing password:', error);
+                if (error.name === 'PasswordException' || error.message.includes('password')) {
+                    alert('Incorrect password. Please try again.');
+                } else {
+                    alert('Error processing PDF: ' + error.message);
+                }
+            }
+            
+            hideLoading();
+        }
+
+        function clearUnlock() {
+            unlockPdfFile = null;
+            unlockPdfData = null;
+            document.getElementById('unlockInput').value = '';
+            document.getElementById('pdfPassword').value = '';
+            document.getElementById('unlockContent').style.display = 'none';
+        }
+
+        // ==================== ENHANCED EPUB READER (epub.js) ====================
+        let book = null;
+        let rendition = null;
 
         function initEpub() {
             setupDropZone('epubDropZone', 'epubInput', (files) => loadEpub(files[0]));
             
-            document.getElementById('prevChapter').addEventListener('click', () => goToChapter(currentChapter - 1));
-            document.getElementById('nextChapter').addEventListener('click', () => goToChapter(currentChapter + 1));
+            document.getElementById('prevChapter').addEventListener('click', () => {
+                if (rendition) rendition.prev();
+            });
+            document.getElementById('nextChapter').addEventListener('click', () => {
+                if (rendition) rendition.next();
+            });
             document.getElementById('epubFontSize').addEventListener('change', updateEpubStyle);
-            document.getElementById('epubTheme').addEventListener('change', updateEpubStyle);
+            document.getElementById('epubTheme').addEventListener('change', updateEpubTheme);
+            document.getElementById('epubFont').addEventListener('change', updateEpubStyle);
+            
+            document.getElementById('progressSlider').addEventListener('input', (e) => {
+                if (book && rendition) {
+                    const cfi = book.locations.cfiFromPercentage(e.target.value / 100);
+                    rendition.display(cfi);
+                }
+            });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (rendition && document.getElementById('epubContent').style.display !== 'none') {
+                    if (e.key === 'ArrowLeft') rendition.prev();
+                    if (e.key === 'ArrowRight') rendition.next();
+                }
+            });
         }
 
         async function loadEpub(file) {
             showLoading('Loading EPUB...');
             
             try {
-                const zip = new JSZip();
-                const zipData = await zip.loadAsync(file);
+                const arrayBuffer = await file.arrayBuffer();
                 
-                // Find container.xml
-                const containerXml = await zipData.file('META-INF/container.xml').async('text');
-                const containerDoc = new DOMParser().parseFromString(containerXml, 'text/xml');
-                const rootfilePath = containerDoc.querySelector('rootfile').getAttribute('full-path');
-                
-                // Parse content.opf
-                const opfContent = await zipData.file(rootfilePath).async('text');
-                const opfDoc = new DOMParser().parseFromString(opfContent, 'text/xml');
-                
-                // Get metadata
-                const title = opfDoc.querySelector('title')?.textContent || 'Unknown Title';
-                const author = opfDoc.querySelector('creator')?.textContent || 'Unknown Author';
-                
-                // Get spine items (chapter order)
-                const spine = opfDoc.querySelectorAll('spine itemref');
-                const manifest = opfDoc.querySelectorAll('manifest item');
-                
-                const manifestMap = {};
-                manifest.forEach(item => {
-                    manifestMap[item.getAttribute('id')] = item.getAttribute('href');
-                });
-                
-                // Get base path for content files
-                const basePath = rootfilePath.substring(0, rootfilePath.lastIndexOf('/') + 1);
-                
-                epubChapters = [];
-                for (const itemRef of spine) {
-                    const idref = itemRef.getAttribute('idref');
-                    const href = manifestMap[idref];
-                    if (href) {
-                        const fullPath = basePath + href;
-                        const file = zipData.file(fullPath);
-                        if (file) {
-                            const content = await file.async('text');
-                            epubChapters.push({
-                                id: idref,
-                                href: href,
-                                content: content
-                            });
-                        }
-                    }
+                // Clean up previous book
+                if (book) {
+                    book.destroy();
                 }
                 
-                epubData = zipData;
+                book = ePub(arrayBuffer);
+                
+                // Wait for book to be ready
+                await book.ready;
+                
+                // Get metadata
+                const metadata = await book.loaded.metadata;
+                const title = metadata.title || 'Unknown Title';
+                const author = metadata.creator || 'Unknown Author';
                 
                 document.getElementById('epubInfo').innerHTML = 
-                    `Title: <span>${title}</span> | 
-                     Author: <span>${author}</span> | 
-                     Chapters: <span>${epubChapters.length}</span>`;
-                
-                // Build TOC
-                buildToc();
+                    `Title: <span>${title}</span> | Author: <span>${author}</span>`;
                 
                 document.getElementById('epubContent').style.display = 'block';
-                goToChapter(0);
+                
+                // Create rendition
+                rendition = book.renderTo('epub-reader', {
+                    width: '100%',
+                    height: '100%',
+                    spread: 'none',
+                    flow: 'scrolled-doc'
+                });
+                
+                // Display first chapter
+                await rendition.display();
+                
+                // Generate locations for progress
+                await book.locations.generate(1024);
+                
+                // Build table of contents
+                const toc = await book.loaded.navigation;
+                buildToc(toc.toc);
+                
+                // Apply initial styles
+                updateEpubTheme();
+                updateEpubStyle();
+                
+                // Track progress
+                rendition.on('relocated', (location) => {
+                    const percent = book.locations.percentageFromCfi(location.start.cfi);
+                    const percentRounded = Math.round(percent * 100);
+                    document.getElementById('currentPercent').textContent = percentRounded + '%';
+                    document.getElementById('progressSlider').value = percentRounded;
+                    
+                    // Update TOC active state
+                    updateTocActive(location);
+                });
+                
             } catch (error) {
                 console.error('Error loading EPUB:', error);
                 alert('Error loading EPUB. Please make sure it\'s a valid EPUB file.');
@@ -1164,65 +1557,73 @@
             hideLoading();
         }
 
-        function buildToc() {
-            const tocList = document.getElementById('tocList');
-            tocList.innerHTML = epubChapters.map((chapter, index) => {
-                // Try to extract title from chapter content
-                const doc = new DOMParser().parseFromString(chapter.content, 'text/html');
-                let title = doc.querySelector('title')?.textContent || 
-                           doc.querySelector('h1')?.textContent ||
-                           doc.querySelector('h2')?.textContent ||
-                           `Chapter ${index + 1}`;
-                title = title.trim().substring(0, 40);
-                
-                return `<div class="toc-item${index === 0 ? ' active' : ''}" data-chapter="${index}">${title}</div>`;
-            }).join('');
+        function buildToc(toc, container = null, level = 0) {
+            const tocList = container || document.getElementById('tocList');
+            if (!container) tocList.innerHTML = '';
             
-            tocList.querySelectorAll('.toc-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    goToChapter(parseInt(item.dataset.chapter));
+            toc.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'toc-item' + (level > 0 ? ' nested' : '');
+                div.textContent = item.label.trim();
+                div.dataset.href = item.href;
+                div.style.paddingLeft = (12 + level * 12) + 'px';
+                
+                div.addEventListener('click', () => {
+                    if (rendition) {
+                        rendition.display(item.href);
+                    }
+                    document.querySelectorAll('.toc-item').forEach(t => t.classList.remove('active'));
+                    div.classList.add('active');
                 });
+                
+                tocList.appendChild(div);
+                
+                if (item.subitems && item.subitems.length > 0) {
+                    buildToc(item.subitems, tocList, level + 1);
+                }
             });
         }
 
-        function goToChapter(index) {
-            if (index < 0 || index >= epubChapters.length) return;
-            
-            currentChapter = index;
-            const chapter = epubChapters[index];
-            
-            // Parse and display chapter content
-            const doc = new DOMParser().parseFromString(chapter.content, 'text/html');
-            const body = doc.body;
-            
-            // Clean up content
-            const reader = document.getElementById('epubReader');
-            reader.innerHTML = body.innerHTML;
-            reader.scrollTop = 0;
-            
-            // Update TOC selection
-            document.querySelectorAll('.toc-item').forEach((item, i) => {
-                item.classList.toggle('active', i === index);
+        function updateTocActive(location) {
+            const href = location.start.href;
+            document.querySelectorAll('.toc-item').forEach(item => {
+                const itemHref = item.dataset.href;
+                if (itemHref && href.includes(itemHref.split('#')[0])) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
             });
+        }
+
+        function updateEpubTheme() {
+            if (!rendition) return;
             
-            updateEpubStyle();
+            const theme = document.getElementById('epubTheme').value;
+            const container = document.getElementById('epubReaderContainer');
+            
+            container.classList.remove('dark', 'sepia');
+            if (theme !== 'light') {
+                container.classList.add(theme);
+            }
+            
+            const themes = {
+                light: { body: { background: '#ffffff', color: '#1a1a1a' } },
+                sepia: { body: { background: '#f4ecd8', color: '#5c4b37' } },
+                dark: { body: { background: '#1e1e1e', color: '#e0e0e0' } }
+            };
+            
+            rendition.themes.default(themes[theme]);
         }
 
         function updateEpubStyle() {
-            const reader = document.getElementById('epubReader');
+            if (!rendition) return;
+            
             const fontSize = document.getElementById('epubFontSize').value;
-            const theme = document.getElementById('epubTheme').value;
+            const fontFamily = document.getElementById('epubFont').value;
             
-            reader.style.fontSize = fontSize + 'px';
-            
-            const themes = {
-                light: { bg: '#ffffff', color: '#1a1a1a' },
-                sepia: { bg: '#f4ecd8', color: '#5c4b37' },
-                dark: { bg: '#1e1e1e', color: '#e0e0e0' }
-            };
-            
-            reader.style.background = themes[theme].bg;
-            reader.style.color = themes[theme].color;
+            rendition.themes.fontSize(fontSize + '%');
+            rendition.themes.font(fontFamily);
         }
 
         // Initialize all tools
@@ -1230,6 +1631,7 @@
             initViewer();
             initMerge();
             initSplit();
+            initUnlock();
             initEpub();
         });
     </script>

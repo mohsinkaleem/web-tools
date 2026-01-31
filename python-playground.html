@@ -570,11 +570,14 @@ print('Hello, World!')
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js" crossorigin="anonymous"></script>
     <script>
         let pyodide = null;
         let isRunning = false;
         const installedPackages = new Set(['micropip']);
+        
+        // Pyodide CDN URL - using official pyodide CDN for better CORS support
+        const PYODIDE_CDN = "https://cdn.jsdelivr.net/pyodide/v0.27.0/full/";
         
         // Example code snippets
         const examples = {
@@ -791,12 +794,13 @@ print(f"\\nAll emails: {emails}")
             try {
                 updateStatus('loading', 'Loading Python environment...');
                 
+                // Use latest Pyodide with proper CORS configuration
                 pyodide = await loadPyodide({
-                    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/"
+                    indexURL: PYODIDE_CDN,
+                    fullStdLib: false // Load stdlib on demand for faster startup
                 });
                 
-                updateStatus('loading', 'Installing micropip...');
-                await pyodide.loadPackage('micropip');
+                updateStatus('loading', 'Setting up Python environment...');
                 
                 // Set up stdout/stderr capture
                 pyodide.runPython(`
@@ -825,13 +829,21 @@ sys.stdout = _stdout_capture
 sys.stderr = _stderr_capture
                 `);
                 
+                // Load micropip for package installation
+                updateStatus('loading', 'Installing micropip...');
+                await pyodide.loadPackage('micropip');
+                
                 updateStatus('ready', 'Python ready! 🐍');
                 document.getElementById('runBtn').disabled = false;
                 document.getElementById('installBtn').disabled = false;
                 
             } catch (error) {
                 console.error('Failed to load Pyodide:', error);
-                updateStatus('error', 'Failed to load Python: ' + error.message);
+                updateStatus('error', 'Failed to load Python environment. Please refresh the page to try again.');
+                
+                // Show detailed error in output
+                document.getElementById('output').innerHTML = 
+                    `<span class="output-error">Failed to initialize Python:\n${escapeHtml(error.message)}\n\nThis may be due to network issues. Please try refreshing the page.</span>`;
             }
         }
         

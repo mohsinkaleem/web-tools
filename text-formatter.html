@@ -409,12 +409,15 @@
             <button class="format-btn" data-format="html">&lt;html&gt; HTML</button>
             <button class="format-btn" data-format="css">🎨 CSS</button>
             <button class="format-btn" data-format="sql">🗃️ SQL</button>
+            <button class="format-btn" data-format="javascript">🟨 JavaScript</button>
+            <button class="format-btn" data-format="python">🐍 Python</button>
+            <button class="format-btn" data-format="go">🔵 Go</button>
         </div>
         
         <div class="card">
             <div class="drop-zone" id="dropZone">
                 <p>📁 Drop a file here or click to upload</p>
-                <input type="file" id="fileInput" accept=".json,.yaml,.yml,.md,.markdown,.xml,.html,.htm,.css,.sql,.txt">
+                <input type="file" id="fileInput" accept=".json,.yaml,.yml,.md,.markdown,.xml,.html,.htm,.css,.sql,.js,.mjs,.jsx,.ts,.tsx,.py,.pyw,.go,.txt">
             </div>
             
             <div class="options-panel" id="optionsPanel">
@@ -539,6 +542,36 @@
                     { id: 'indent', label: 'Indentation', type: 'select', options: ['2 spaces', '4 spaces'], default: '2 spaces' }
                 ],
                 sample: 'select u.id, u.name, u.email, o.order_id, o.total from users u inner join orders o on u.id = o.user_id where u.active = 1 and o.created_at > "2024-01-01" order by o.total desc limit 10'
+            },
+            javascript: {
+                name: 'JavaScript',
+                extension: '.js',
+                mimeType: 'text/javascript',
+                options: [
+                    { id: 'indent', label: 'Indentation', type: 'select', options: ['2 spaces', '4 spaces', 'Tab'], default: '2 spaces' },
+                    { id: 'semicolons', label: 'Add Semicolons', type: 'checkbox', default: true },
+                    { id: 'singleQuotes', label: 'Single Quotes', type: 'checkbox', default: false }
+                ],
+                sample: 'const greet=(name)=>{console.log("Hello, "+name+"!");return{message:"Hello",name:name}};function processData(data){if(!data){return null}const result=data.map(item=>item.value*2);return result.filter(x=>x>10)}'
+            },
+            python: {
+                name: 'Python',
+                extension: '.py',
+                mimeType: 'text/x-python',
+                options: [
+                    { id: 'indent', label: 'Indentation', type: 'select', options: ['2 spaces', '4 spaces'], default: '4 spaces' },
+                    { id: 'sortImports', label: 'Sort Imports', type: 'checkbox', default: true }
+                ],
+                sample: 'import sys\nimport os\ndef greet(name):print(f"Hello, {name}!");return {"message":"Hello","name":name}\nclass Calculator:\n def __init__(self):self.value=0\n def add(self,x):self.value+=x;return self\n def subtract(self,x):self.value-=x;return self'
+            },
+            go: {
+                name: 'Go',
+                extension: '.go',
+                mimeType: 'text/x-go',
+                options: [
+                    { id: 'indent', label: 'Indentation', type: 'select', options: ['Tab', '4 spaces'], default: 'Tab' }
+                ],
+                sample: 'package main\nimport "fmt"\nfunc main(){fmt.Println("Hello, World!");numbers:=[]int{1,2,3,4,5};for _,n:=range numbers{fmt.Printf("Number: %d\\n",n)}}\nfunc add(a,b int)int{return a+b}'
             }
         };
         
@@ -614,7 +647,9 @@
                 const formatMap = {
                     json: 'json', yaml: 'yaml', yml: 'yaml', md: 'markdown', 
                     markdown: 'markdown', xml: 'xml', html: 'html', htm: 'html',
-                    css: 'css', sql: 'sql'
+                    css: 'css', sql: 'sql', js: 'javascript', mjs: 'javascript',
+                    jsx: 'javascript', ts: 'javascript', tsx: 'javascript',
+                    py: 'python', pyw: 'python', go: 'go'
                 };
                 if (formatMap[ext]) {
                     currentFormat = formatMap[ext];
@@ -710,6 +745,18 @@
                     case 'sql':
                         output = formatSQL(input);
                         break;
+                        
+                    case 'javascript':
+                        output = formatJavaScript(input, indent);
+                        break;
+                        
+                    case 'python':
+                        output = formatPython(input, indent);
+                        break;
+                        
+                    case 'go':
+                        output = formatGo(input, indent);
+                        break;
                 }
                 
                 displayOutput(output);
@@ -753,6 +800,19 @@
                         
                     case 'sql':
                         output = input.replace(/\s+/g, ' ').trim();
+                        break;
+                        
+                    case 'javascript':
+                        output = minifyJavaScript(input);
+                        break;
+                        
+                    case 'python':
+                        // Python can't be safely minified due to indentation significance
+                        output = input.split('\n').map(line => line.trimEnd()).filter(line => line.length > 0).join('\n');
+                        break;
+                        
+                    case 'go':
+                        output = minifyGo(input);
                         break;
                         
                     default:
@@ -935,6 +995,424 @@
             return formatted;
         }
         
+        // ==================== JAVASCRIPT FORMATTER ====================
+        function formatJavaScript(code, indent) {
+            const addSemicolons = document.getElementById('opt-semicolons')?.checked ?? true;
+            const singleQuotes = document.getElementById('opt-singleQuotes')?.checked ?? false;
+            
+            let formatted = '';
+            let indentLevel = 0;
+            let inString = false;
+            let stringChar = '';
+            let inComment = false;
+            let inMultilineComment = false;
+            
+            // First, normalize the code
+            code = code.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            
+            // Add spaces around operators and format
+            let i = 0;
+            while (i < code.length) {
+                const char = code[i];
+                const nextChar = code[i + 1] || '';
+                const prevChar = formatted[formatted.length - 1] || '';
+                
+                // Handle strings
+                if (!inComment && !inMultilineComment && (char === '"' || char === "'" || char === '`')) {
+                    if (!inString) {
+                        inString = true;
+                        stringChar = char;
+                    } else if (char === stringChar && code[i - 1] !== '\\') {
+                        inString = false;
+                    }
+                    formatted += char;
+                    i++;
+                    continue;
+                }
+                
+                if (inString) {
+                    formatted += char;
+                    i++;
+                    continue;
+                }
+                
+                // Handle comments
+                if (char === '/' && nextChar === '/') {
+                    inComment = true;
+                    formatted += char;
+                    i++;
+                    continue;
+                }
+                
+                if (char === '/' && nextChar === '*') {
+                    inMultilineComment = true;
+                    formatted += char;
+                    i++;
+                    continue;
+                }
+                
+                if (inMultilineComment && char === '*' && nextChar === '/') {
+                    inMultilineComment = false;
+                    formatted += '*/';
+                    i += 2;
+                    continue;
+                }
+                
+                if (char === '\n' && inComment) {
+                    inComment = false;
+                }
+                
+                if (inComment || inMultilineComment) {
+                    formatted += char;
+                    i++;
+                    continue;
+                }
+                
+                // Handle braces
+                if (char === '{') {
+                    formatted = formatted.trimEnd() + ' {\n' + indent.repeat(indentLevel + 1);
+                    indentLevel++;
+                    i++;
+                    continue;
+                }
+                
+                if (char === '}') {
+                    indentLevel = Math.max(0, indentLevel - 1);
+                    formatted = formatted.trimEnd() + '\n' + indent.repeat(indentLevel) + '}';
+                    i++;
+                    continue;
+                }
+                
+                // Handle semicolons
+                if (char === ';') {
+                    formatted = formatted.trimEnd() + ';\n' + indent.repeat(indentLevel);
+                    i++;
+                    continue;
+                }
+                
+                // Handle newlines
+                if (char === '\n') {
+                    if (prevChar !== '\n' && prevChar !== '{') {
+                        formatted += '\n' + indent.repeat(indentLevel);
+                    }
+                    i++;
+                    continue;
+                }
+                
+                // Skip extra whitespace
+                if (char === ' ' || char === '\t') {
+                    if (prevChar !== ' ' && prevChar !== '\n' && prevChar !== '(' && prevChar !== '[') {
+                        formatted += ' ';
+                    }
+                    i++;
+                    continue;
+                }
+                
+                formatted += char;
+                i++;
+            }
+            
+            // Clean up
+            formatted = formatted
+                .replace(/\n\s*\n\s*\n/g, '\n\n')  // Max 2 newlines
+                .replace(/{\s+}/g, '{}')  // Empty blocks
+                .replace(/\(\s+/g, '(')  // Space after (
+                .replace(/\s+\)/g, ')')  // Space before )
+                .trim();
+            
+            // Convert quotes if needed
+            if (singleQuotes) {
+                formatted = formatted.replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, "'$1'");
+            }
+            
+            return formatted;
+        }
+        
+        function minifyJavaScript(code) {
+            // Remove comments
+            code = code.replace(/\/\/.*$/gm, '');
+            code = code.replace(/\/\*[\s\S]*?\*\//g, '');
+            
+            // Remove extra whitespace while preserving strings
+            let result = '';
+            let inString = false;
+            let stringChar = '';
+            
+            for (let i = 0; i < code.length; i++) {
+                const char = code[i];
+                
+                if (!inString && (char === '"' || char === "'" || char === '`')) {
+                    inString = true;
+                    stringChar = char;
+                    result += char;
+                } else if (inString && char === stringChar && code[i-1] !== '\\') {
+                    inString = false;
+                    result += char;
+                } else if (inString) {
+                    result += char;
+                } else if (/\s/.test(char)) {
+                    const prev = result[result.length - 1];
+                    const next = code[i + 1];
+                    // Keep space if between alphanumeric chars
+                    if (/[a-zA-Z0-9_$]/.test(prev) && /[a-zA-Z0-9_$]/.test(next)) {
+                        result += ' ';
+                    }
+                } else {
+                    result += char;
+                }
+            }
+            
+            return result.trim();
+        }
+        
+        // ==================== PYTHON FORMATTER ====================
+        function formatPython(code, indent) {
+            const sortImports = document.getElementById('opt-sortImports')?.checked ?? true;
+            
+            let lines = code.split('\n');
+            let formatted = [];
+            let currentIndent = 0;
+            
+            // Extract imports for sorting
+            let imports = [];
+            let fromImports = [];
+            let otherLines = [];
+            let seenNonImport = false;
+            
+            for (let line of lines) {
+                const trimmed = line.trim();
+                
+                if (!seenNonImport && trimmed.startsWith('import ')) {
+                    imports.push(trimmed);
+                } else if (!seenNonImport && trimmed.startsWith('from ')) {
+                    fromImports.push(trimmed);
+                } else {
+                    if (trimmed.length > 0 && !trimmed.startsWith('#')) {
+                        seenNonImport = true;
+                    }
+                    otherLines.push(line);
+                }
+            }
+            
+            // Sort imports if requested
+            if (sortImports) {
+                imports.sort();
+                fromImports.sort();
+            }
+            
+            // Reconstruct with sorted imports
+            if (imports.length > 0 || fromImports.length > 0) {
+                formatted = [...imports, ...fromImports, ''];
+            }
+            
+            // Process other lines
+            for (let line of otherLines) {
+                const trimmed = line.trim();
+                
+                if (trimmed.length === 0) {
+                    formatted.push('');
+                    continue;
+                }
+                
+                // Decrease indent for these keywords
+                if (trimmed.match(/^(elif|else|except|finally)\b/)) {
+                    currentIndent = Math.max(0, currentIndent - 1);
+                }
+                
+                // Check for inline statements that should be split
+                // e.g., "def foo():print('hi')" -> split to multiple lines
+                const colonMatch = trimmed.match(/^(def |class |if |elif |else:|for |while |try:|except|with )(.+?):(.+)$/);
+                if (colonMatch && !colonMatch[3].startsWith('#')) {
+                    formatted.push(indent.repeat(currentIndent) + colonMatch[1] + colonMatch[2] + ':');
+                    currentIndent++;
+                    // Split multiple statements
+                    const statements = colonMatch[3].split(';');
+                    for (const stmt of statements) {
+                        if (stmt.trim()) {
+                            formatted.push(indent.repeat(currentIndent) + stmt.trim());
+                        }
+                    }
+                } else {
+                    formatted.push(indent.repeat(currentIndent) + trimmed);
+                    
+                    // Increase indent after these
+                    if (trimmed.endsWith(':') && !trimmed.startsWith('#')) {
+                        currentIndent++;
+                    }
+                }
+                
+                // Handle return, break, continue, pass - they end a block conceptually
+                if (trimmed.match(/^(return|break|continue|pass|raise)\b/)) {
+                    // Don't auto-decrease, let the next line handle it
+                }
+            }
+            
+            // Clean up multiple blank lines
+            let result = [];
+            let blankCount = 0;
+            for (const line of formatted) {
+                if (line.trim() === '') {
+                    blankCount++;
+                    if (blankCount <= 2) {
+                        result.push('');
+                    }
+                } else {
+                    blankCount = 0;
+                    result.push(line);
+                }
+            }
+            
+            return result.join('\n').trim();
+        }
+        
+        // ==================== GO FORMATTER ====================
+        function formatGo(code, indent) {
+            let formatted = '';
+            let indentLevel = 0;
+            let inString = false;
+            let stringChar = '';
+            let inComment = false;
+            let inMultilineComment = false;
+            
+            code = code.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            
+            let i = 0;
+            while (i < code.length) {
+                const char = code[i];
+                const nextChar = code[i + 1] || '';
+                const prevChar = formatted[formatted.length - 1] || '';
+                
+                // Handle strings
+                if (!inComment && !inMultilineComment && (char === '"' || char === '`')) {
+                    if (!inString) {
+                        inString = true;
+                        stringChar = char;
+                    } else if (char === stringChar && code[i - 1] !== '\\') {
+                        inString = false;
+                    }
+                    formatted += char;
+                    i++;
+                    continue;
+                }
+                
+                if (inString) {
+                    formatted += char;
+                    i++;
+                    continue;
+                }
+                
+                // Handle comments
+                if (char === '/' && nextChar === '/') {
+                    inComment = true;
+                    formatted += char;
+                    i++;
+                    continue;
+                }
+                
+                if (char === '/' && nextChar === '*') {
+                    inMultilineComment = true;
+                    formatted += char;
+                    i++;
+                    continue;
+                }
+                
+                if (inMultilineComment && char === '*' && nextChar === '/') {
+                    inMultilineComment = false;
+                    formatted += '*/';
+                    i += 2;
+                    continue;
+                }
+                
+                if (char === '\n' && inComment) {
+                    inComment = false;
+                }
+                
+                if (inComment || inMultilineComment) {
+                    formatted += char;
+                    i++;
+                    continue;
+                }
+                
+                // Handle braces
+                if (char === '{') {
+                    formatted = formatted.trimEnd() + ' {\n' + indent.repeat(indentLevel + 1);
+                    indentLevel++;
+                    i++;
+                    continue;
+                }
+                
+                if (char === '}') {
+                    indentLevel = Math.max(0, indentLevel - 1);
+                    formatted = formatted.trimEnd() + '\n' + indent.repeat(indentLevel) + '}';
+                    i++;
+                    continue;
+                }
+                
+                // Handle semicolons (Go uses them implicitly)
+                if (char === ';') {
+                    formatted = formatted.trimEnd() + '\n' + indent.repeat(indentLevel);
+                    i++;
+                    continue;
+                }
+                
+                // Handle newlines
+                if (char === '\n') {
+                    formatted += '\n' + indent.repeat(indentLevel);
+                    i++;
+                    continue;
+                }
+                
+                // Skip extra whitespace
+                if (char === ' ' || char === '\t') {
+                    if (prevChar !== ' ' && prevChar !== '\n' && prevChar !== '(' && prevChar !== '[') {
+                        formatted += ' ';
+                    }
+                    i++;
+                    continue;
+                }
+                
+                formatted += char;
+                i++;
+            }
+            
+            // Clean up and add blank lines between top-level declarations
+            formatted = formatted
+                .replace(/\n\s*\n\s*\n/g, '\n\n')
+                .replace(/}\s*func /g, '}\n\nfunc ')
+                .replace(/}\s*type /g, '}\n\ntype ')
+                .trim();
+            
+            return formatted;
+        }
+        
+        function minifyGo(code) {
+            // Remove comments
+            code = code.replace(/\/\/.*$/gm, '');
+            code = code.replace(/\/\*[\s\S]*?\*\//g, '');
+            
+            // Replace newlines with semicolons where needed
+            let result = '';
+            let inString = false;
+            let stringChar = '';
+            
+            const lines = code.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line) {
+                    if (result && !result.endsWith('{') && !result.endsWith('(') && 
+                        !line.startsWith('}') && !line.startsWith(')')) {
+                        result += ';';
+                    }
+                    result += line;
+                }
+            }
+            
+            // Clean up extra semicolons
+            result = result.replace(/;+/g, ';').replace(/;}/g, '}').replace(/{;/g, '{');
+            
+            return result.trim();
+        }
+        
         function xmlToJson(xml) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(xml, 'application/xml');
@@ -993,6 +1471,12 @@
                 highlighted = highlightJSON(highlighted);
             } else if (currentFormat === 'yaml') {
                 highlighted = highlightYAML(highlighted);
+            } else if (currentFormat === 'javascript') {
+                highlighted = highlightJavaScript(highlighted);
+            } else if (currentFormat === 'python') {
+                highlighted = highlightPython(highlighted);
+            } else if (currentFormat === 'go') {
+                highlighted = highlightGo(highlighted);
             }
             
             outputEl.innerHTML = highlighted;
@@ -1028,6 +1512,115 @@
                 .replace(/: (true|false|yes|no)$/gm, ': <span class="hl-boolean">$1</span>')
                 .replace(/: (-?\d+\.?\d*)$/gm, ': <span class="hl-number">$1</span>')
                 .replace(/: (null|~)$/gm, ': <span class="hl-null">$1</span>');
+        }
+        
+        function highlightJavaScript(text) {
+            const keywords = ['const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 
+                            'do', 'switch', 'case', 'break', 'continue', 'try', 'catch', 'finally', 
+                            'throw', 'class', 'extends', 'new', 'this', 'super', 'import', 'export', 
+                            'default', 'from', 'async', 'await', 'yield', 'typeof', 'instanceof', 
+                            'in', 'of', 'delete', 'void', 'static', 'get', 'set'];
+            
+            let result = text;
+            
+            // Comments
+            result = result.replace(/(\/\/.*$)/gm, '<span class="hl-comment">$1</span>');
+            result = result.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="hl-comment">$1</span>');
+            
+            // Strings
+            result = result.replace(/("(?:[^"\\]|\\.)*")/g, '<span class="hl-string">$1</span>');
+            result = result.replace(/('(?:[^'\\]|\\.)*')/g, '<span class="hl-string">$1</span>');
+            result = result.replace(/(`(?:[^`\\]|\\.)*`)/g, '<span class="hl-string">$1</span>');
+            
+            // Keywords
+            keywords.forEach(kw => {
+                result = result.replace(new RegExp('\\b(' + kw + ')\\b', 'g'), '<span class="hl-key">$1</span>');
+            });
+            
+            // Numbers
+            result = result.replace(/\b(-?\d+\.?\d*)\b/g, '<span class="hl-number">$1</span>');
+            
+            // Booleans
+            result = result.replace(/\b(true|false|null|undefined|NaN|Infinity)\b/g, '<span class="hl-boolean">$1</span>');
+            
+            return result;
+        }
+        
+        function highlightPython(text) {
+            const keywords = ['def', 'class', 'if', 'elif', 'else', 'for', 'while', 'try', 'except', 
+                            'finally', 'with', 'as', 'import', 'from', 'return', 'yield', 'raise', 
+                            'pass', 'break', 'continue', 'lambda', 'and', 'or', 'not', 'in', 'is', 
+                            'global', 'nonlocal', 'assert', 'del', 'async', 'await'];
+            
+            let result = text;
+            
+            // Comments
+            result = result.replace(/(#.*$)/gm, '<span class="hl-comment">$1</span>');
+            
+            // Docstrings / Multi-line strings
+            result = result.replace(/("""[\s\S]*?""")/g, '<span class="hl-string">$1</span>');
+            result = result.replace(/('''[\s\S]*?''')/g, '<span class="hl-string">$1</span>');
+            
+            // Strings
+            result = result.replace(/("(?:[^"\\]|\\.)*")/g, '<span class="hl-string">$1</span>');
+            result = result.replace(/('(?:[^'\\]|\\.)*')/g, '<span class="hl-string">$1</span>');
+            result = result.replace(/(f"(?:[^"\\]|\\.)*")/g, '<span class="hl-string">$1</span>');
+            result = result.replace(/(f'(?:[^'\\]|\\.)*')/g, '<span class="hl-string">$1</span>');
+            
+            // Keywords
+            keywords.forEach(kw => {
+                result = result.replace(new RegExp('\\b(' + kw + ')\\b', 'g'), '<span class="hl-key">$1</span>');
+            });
+            
+            // Numbers
+            result = result.replace(/\b(-?\d+\.?\d*)\b/g, '<span class="hl-number">$1</span>');
+            
+            // Booleans and None
+            result = result.replace(/\b(True|False|None)\b/g, '<span class="hl-boolean">$1</span>');
+            
+            // Decorators
+            result = result.replace(/(@\w+)/g, '<span class="hl-key">$1</span>');
+            
+            return result;
+        }
+        
+        function highlightGo(text) {
+            const keywords = ['func', 'var', 'const', 'type', 'struct', 'interface', 'map', 'chan',
+                            'if', 'else', 'for', 'range', 'switch', 'case', 'default', 'break', 
+                            'continue', 'return', 'go', 'defer', 'select', 'fallthrough', 'goto',
+                            'package', 'import', 'make', 'new', 'len', 'cap', 'append', 'copy',
+                            'delete', 'panic', 'recover'];
+            
+            let result = text;
+            
+            // Comments
+            result = result.replace(/(\/\/.*$)/gm, '<span class="hl-comment">$1</span>');
+            result = result.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="hl-comment">$1</span>');
+            
+            // Strings
+            result = result.replace(/("(?:[^"\\]|\\.)*")/g, '<span class="hl-string">$1</span>');
+            result = result.replace(/(`[^`]*`)/g, '<span class="hl-string">$1</span>');
+            
+            // Keywords
+            keywords.forEach(kw => {
+                result = result.replace(new RegExp('\\b(' + kw + ')\\b', 'g'), '<span class="hl-key">$1</span>');
+            });
+            
+            // Types
+            const types = ['int', 'int8', 'int16', 'int32', 'int64', 'uint', 'uint8', 'uint16', 
+                          'uint32', 'uint64', 'float32', 'float64', 'complex64', 'complex128',
+                          'bool', 'string', 'byte', 'rune', 'error', 'any'];
+            types.forEach(t => {
+                result = result.replace(new RegExp('\\b(' + t + ')\\b', 'g'), '<span class="hl-null">$1</span>');
+            });
+            
+            // Numbers
+            result = result.replace(/\b(-?\d+\.?\d*)\b/g, '<span class="hl-number">$1</span>');
+            
+            // Booleans
+            result = result.replace(/\b(true|false|nil)\b/g, '<span class="hl-boolean">$1</span>');
+            
+            return result;
         }
         
         function setStatus(type, message) {
