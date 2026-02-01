@@ -127,9 +127,7 @@ async function main() {
         log("Loading Pyodide runtime...", "system");
         
         // Load Pyodide
-        pyodide = await loadPyodide({
-            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/"
-        });
+        pyodide = await loadPyodide();
         
         log("Python runtime loaded.", "system");
         replLog("Python runtime loaded.", "system");
