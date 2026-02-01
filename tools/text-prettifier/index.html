@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Prettifier - Format JSON, YAML, XML, Markdown & More</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CodeMirror -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/yaml/yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/markdown/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/sql/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/go/go.min.js"></script>
+    
+    <!-- Prettier (v3) -->
+    <script src="https://unpkg.com/prettier@3.0.0/standalone.js"></script>
+    <script src="https://unpkg.com/prettier@3.0.0/plugins/estree.js"></script>
+    <script src="https://unpkg.com/prettier@3.0.0/plugins/babel.js"></script>
+    <script src="https://unpkg.com/prettier@3.0.0/plugins/typescript.js"></script>
+    <script src="https://unpkg.com/prettier@3.0.0/plugins/html.js"></script>
+    <script src="https://unpkg.com/prettier@3.0.0/plugins/markdown.js"></script>
+    <script src="https://unpkg.com/prettier@3.0.0/plugins/yaml.js"></script>
+    <script src="https://unpkg.com/prettier@3.0.0/plugins/postcss.js"></script>
+    <script src="https://unpkg.com/xml-formatter@2.6.1/dist/browser/xml-formatter.js"></script>
+    <script src="https://unpkg.com/sql-formatter@12.2.0/dist/sql-formatter.min.js"></script>
+    <!-- Basic XML support via a simple custom formatter if prettier plugin fails or is hard to load -->
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← Back to Tools</a>
+        
+        <header>
+            <h1>Text Prettifier & Formatter</h1>
+            <p>Format, validate, and beautify your code and data structures.</p>
+        </header>
+
+        <div class="toolbar">
+            <div class="tool-group">
+                <label for="language-select">Language:</label>
+                <select id="language-select">
+                    <option value="json">JSON</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="typescript">TypeScript</option>
+                    <option value="python">Python</option>
+                    <option value="go">Go (Golang)</option>
+                    <option value="html">HTML</option>
+                    <option value="css">CSS</option>
+                    <option value="yaml">YAML</option>
+                    <option value="markdown">Markdown</option>
+                    <option value="xml">XML</option>
+                    <option value="sql">SQL</option>
+                </select>
+            </div>
+            
+            <div class="tool-group actions">
+                <button id="format-btn" class="primary-btn"><i class="fas fa-magic"></i> Prettify</button>
+                <button id="minify-btn" class="secondary-btn"><i class="fas fa-compress-arrows-alt"></i> Minify</button>
+                <button id="detect-btn" class="secondary-btn" title="Auto Detect Language"><i class="fas fa-search"></i> Detect</button>
+                <button id="copy-btn" class="icon-btn" title="Copy Output"><i class="far fa-copy"></i></button>
+                <button id="download-btn" class="icon-btn" title="Download Output"><i class="fas fa-download"></i></button>
+                <button id="clear-btn" class="icon-btn" title="Clear All"><i class="fas fa-trash-alt"></i></button>
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <div class="editor-pane">
+                <div class="pane-header">Input</div>
+                <div id="input-editor"></div>
+            </div>
+            <div class="editor-pane">
+                <div class="pane-header">
+                    Output 
+                    <span id="status-indicator" class="status"></span>
+                </div>
+                <div id="output-editor"></div>
+            </div>
+        </div>
+        
+        <div class="options-panel">
+            <div class="options-flex">
+                <div class="option-section">
+                    <h3>Formatting Options</h3>
+                    <div class="option-group">
+                        <label>
+                            <input type="checkbox" id="manage-tabs" checked> Use Tabs
+                        </label>
+                        <label>
+                            Tab Width: <input type="number" id="tab-width" value="2" min="2" max="8">
+                        </label>
+                    </div>
+                </div>
+                <div class="option-section">
+                    <h3>Text Transformations</h3>
+                    <div class="option-group">
+                        <button id="upper-btn" class="text-tool-btn">UPPERCASE</button>
+                        <button id="lower-btn" class="text-tool-btn">lowercase</button>
+                        <button id="title-btn" class="text-tool-btn">Title Case</button>
+                        <button id="sort-btn" class="text-tool-btn">Sort Lines</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

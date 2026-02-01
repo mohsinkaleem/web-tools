@@ -12,20 +12,24 @@ Comprehensive image editing suite with:
 - **Format Conversion**: Export as PNG, JPEG, or WebP with quality control
 
 ### 📄 PDF & Document Tools
-Full-featured PDF toolkit:
+Full-featured PDF toolkit with advanced features:
 - **PDF Viewer**: View PDFs with thumbnail navigation, zoom, and page controls
+  - Full-text search across all pages
+  - Keyboard shortcuts for navigation
+  - Multiple zoom levels and view modes
+  - Page rotation and continuous scroll
 - **Merge PDFs**: Combine multiple PDFs with drag-to-reorder functionality
 - **Split PDF**: Extract specific pages or page ranges
-- **EPUB Reader**: Read EPUB books with table of contents, themes, and font sizing
-
-### ✨ Text Prettifier & Formatter
-Format and validate multiple text formats:
-- **JSON**: Prettify, minify, validate, sort keys
-- **YAML**: Format and convert to/from JSON
-- **Markdown**: Live preview with GitHub-flavored rendering
-- **XML/HTML**: Auto-indent and format
-- **CSS**: Beautify stylesheets
-- **SQL**: Format queries with keyword uppercasing
+- **Remove Password**: Unlock password-protected PDFs
+- **EPUB Reader**: Feature-rich ebook reader with:
+  - Full-text search within books
+  - Bookmark system with persistence
+  - Text highlighting that saves across sessions
+  - Reading statistics and time tracking
+  - Resume reading from last position
+  - Table of contents navigation
+  - Customizable themes (Light/Sepia/Dark)
+  - Adjustable font size and family
 
 ### 🐍 Python Playground
 Full Python interpreter in the browser powered by Pyodide:
@@ -36,20 +40,15 @@ Full Python interpreter in the browser powered by Pyodide:
 - Share code via URL
 - Example code snippets included
 
-### 📝 Markdown Previewer
-Write and preview markdown with:
-- Live side-by-side preview
-- Export to HTML or PDF
-- Copy to clipboard
-
-### 📚 EPUB Reader
-Read EPUB books with:
-- Table of contents navigation
-- Adjustable font size
-- Light/Sepia/Dark themes
+### ✨ Text Prettifier
+Format, validate, and beautify code and data structures:
+- **Languages**: JSON, JavaScript, HTML, CSS, YAML, Markdown, XML, SQL
+- **Formatting**: Powered by Prettier, sql-formatter, and xml-formatter
+- **Minification**: Compact JSON, CSS, and XML
+- **Features**: Syntax highlighting, error reporting, copy/clear tools
+- **XML Support**: Dedicated XML formatting and minification
 
 ## 🔒 Privacy First
-
 All processing happens locally in your browser. Your files and data never leave your device - there's no server to upload to!
 
 ## � Project Structure

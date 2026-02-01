@@ -90,6 +90,13 @@ function initViewer() {
     });
     document.getElementById('downloadPdf').addEventListener('click', downloadCurrentPdf);
     
+    // PDF Search
+    document.getElementById('searchPdf')?.addEventListener('click', searchInPdf);
+    document.getElementById('pdfSearchInput')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchInPdf();
+    });
+    document.getElementById('clearSearch')?.addEventListener('click', clearPdfSearch);
+    
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
         if (pdfDoc && document.getElementById('viewerContent').style.display !== 'none') {
@@ -97,6 +104,11 @@ function initViewer() {
             if (e.key === 'ArrowRight' || e.key === 'PageDown') goToPage(currentPage + 1);
             if (e.key === 'Home') goToPage(1);
             if (e.key === 'End') goToPage(pdfDoc.numPages);
+            // Ctrl/Cmd + F for search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f' && document.getElementById('viewerContent').style.display !== 'none') {
+                e.preventDefault();
+                document.getElementById('pdfSearchInput')?.focus();
+            }
         }
     });
 }
@@ -267,6 +279,106 @@ function downloadCurrentPdf() {
     link.download = 'document.pdf';
     link.click();
     URL.revokeObjectURL(link.href);
+}
+
+// ==================== PDF SEARCH ====================
+let pdfSearchResults = [];
+
+async function searchInPdf() {
+    const searchInput = document.getElementById('pdfSearchInput');
+    const query = searchInput?.value.trim();
+    
+    if (!query || !pdfDoc) return;
+    
+    showLoading('Searching PDF...');
+    pdfSearchResults = [];
+    
+    try {
+        // Search through all pages
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const textContent = await page.getTextContent();
+            const text = textContent.items.map(item => item.str).join(' ');
+            
+            // Case-insensitive search
+            const regex = new RegExp(query, 'gi');
+            const matches = text.match(regex);
+            
+            if (matches && matches.length > 0) {
+                pdfSearchResults.push({
+                    page: i,
+                    matches: matches.length,
+                    snippet: getTextSnippet(text, query)
+                });
+            }
+        }
+        
+        displayPdfSearchResults(query);
+    } catch (error) {
+        console.error('PDF search error:', error);
+        alert('Error searching PDF');
+    }
+    
+    hideLoading();
+}
+
+function getTextSnippet(text, query) {
+    const index = text.toLowerCase().indexOf(query.toLowerCase());
+    if (index === -1) return '';
+    
+    const start = Math.max(0, index - 40);
+    const end = Math.min(text.length, index + query.length + 40);
+    let snippet = text.substring(start, end);
+    
+    if (start > 0) snippet = '...' + snippet;
+    if (end < text.length) snippet = snippet + '...';
+    
+    return snippet;
+}
+
+function displayPdfSearchResults(query) {
+    const panel = document.getElementById('pdfSearchResults');
+    const clearBtn = document.getElementById('clearSearch');
+    
+    if (!panel) return;
+    
+    if (pdfSearchResults.length === 0) {
+        panel.innerHTML = `<p style="color: var(--text-muted); padding: 20px;">No results found for "${query}"</p>`;
+    } else {
+        panel.innerHTML = `
+            <h4>Search Results (${pdfSearchResults.length} pages)</h4>
+            ${pdfSearchResults.map(r => `
+                <div class="search-result-item" data-page="${r.page}">
+                    <div>
+                        <strong>Page ${r.page}</strong> - ${r.matches} occurrence(s)
+                        ${r.snippet ? `<br><small style="color: var(--text-muted);">${r.snippet}</small>` : ''}
+                    </div>
+                </div>
+            `).join('')}
+        `;
+        
+        // Add click handlers
+        panel.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', () => {
+                goToPage(parseInt(item.dataset.page));
+                panel.style.display = 'none';
+            });
+        });
+    }
+    
+    panel.style.display = 'block';
+    if (clearBtn) clearBtn.style.display = 'inline-block';
+}
+
+function clearPdfSearch() {
+    const searchInput = document.getElementById('pdfSearchInput');
+    const panel = document.getElementById('pdfSearchResults');
+    const clearBtn = document.getElementById('clearSearch');
+    
+    if (searchInput) searchInput.value = '';
+    if (panel) panel.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'none';
+    pdfSearchResults = [];
 }
 
 // ==================== PDF MERGE ====================
@@ -654,6 +766,9 @@ function clearUnlock() {
 // ==================== ENHANCED EPUB READER (epub.js) ====================
 let book = null;
 let rendition = null;
+let epubBookmarks = [];
+let epubHighlights = [];
+let readingStats = { startTime: null, totalReadTime: 0 };
 
 function initEpub() {
     setupDropZone('epubDropZone', 'epubInput', (files) => loadEpub(files[0]));
@@ -668,6 +783,16 @@ function initEpub() {
     document.getElementById('epubTheme').addEventListener('change', updateEpubTheme);
     document.getElementById('epubFont').addEventListener('change', updateEpubStyle);
     
+    // Search functionality
+    document.getElementById('searchEpub')?.addEventListener('click', searchInEpub);
+    document.getElementById('epubSearchInput')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchInEpub();
+    });
+    
+    // Bookmark management
+    document.getElementById('addBookmark')?.addEventListener('click', addBookmark);
+    document.getElementById('showBookmarks')?.addEventListener('click', toggleBookmarksPanel);
+    
     document.getElementById('progressSlider').addEventListener('input', (e) => {
         if (book && rendition) {
             const cfi = book.locations.cfiFromPercentage(e.target.value / 100);
@@ -680,18 +805,46 @@ function initEpub() {
         if (rendition && document.getElementById('epubContent').style.display !== 'none') {
             if (e.key === 'ArrowLeft') rendition.prev();
             if (e.key === 'ArrowRight') rendition.next();
+            // Ctrl/Cmd + F for search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('epubSearchInput')?.focus();
+            }
+            // Ctrl/Cmd + D for bookmark
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                addBookmark();
+            }
         }
     });
+    
+    // Load saved bookmarks and stats
+    loadSavedData();
 }
 
 async function loadEpub(file) {
     showLoading('Loading EPUB...');
     
     try {
+        // Wait for epub.js to be loaded
+        if (typeof ePub === 'undefined') {
+            let retries = 0;
+            while (typeof ePub === 'undefined' && retries < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                retries++;
+            }
+            if (typeof ePub === 'undefined') {
+                throw new Error('EPUB library not loaded. Please refresh the page.');
+            }
+        }
+        
         // Clean up previous book
         if (book) {
             book.destroy();
         }
+        
+        // Start reading timer
+        readingStats.startTime = Date.now();
         
         // Use Blob/File directly which is more robust
         book = ePub(file);
@@ -740,11 +893,20 @@ async function loadEpub(file) {
             
             // Update TOC active state
             updateTocActive(location);
+            
+            // Save last position
+            saveLastPosition(location.start.cfi);
         });
+        
+        // Enable text selection for highlighting
+        rendition.on('selected', handleTextSelection);
+        
+        // Update reading stats periodically
+        updateReadingStats();
         
     } catch (error) {
         console.error('Error loading EPUB:', error);
-        alert('Error loading EPUB. Please make sure it\'s a valid EPUB file.');
+        alert('Error loading EPUB: ' + error.message + '\n\nPlease make sure it\'s a valid EPUB file and try refreshing the page.');
     }
     
     hideLoading();
@@ -817,6 +979,277 @@ function updateEpubStyle() {
     
     rendition.themes.fontSize(fontSize + '%');
     rendition.themes.font(fontFamily);
+}
+
+// ==================== NEW EPUB FEATURES ====================
+
+// Search in EPUB
+async function searchInEpub() {
+    const searchInput = document.getElementById('epubSearchInput');
+    const query = searchInput?.value.trim();
+    
+    if (!query || !book) return;
+    
+    showLoading('Searching...');
+    
+    try {
+        const results = await book.spine.spineItems.reduce(async (accPromise, item) => {
+            const acc = await accPromise;
+            const doc = await item.load(book.load.bind(book));
+            const serializer = new XMLSerializer();
+            const content = serializer.serializeToString(doc);
+            
+            // Simple search (case-insensitive)
+            const regex = new RegExp(query, 'gi');
+            const matches = content.match(regex);
+            
+            if (matches && matches.length > 0) {
+                acc.push({
+                    cfi: item.cfiBase,
+                    href: item.href,
+                    matches: matches.length
+                });
+            }
+            
+            return acc;
+        }, Promise.resolve([]));
+        
+        displaySearchResults(results, query);
+    } catch (error) {
+        console.error('Search error:', error);
+        alert('Error searching in book');
+    }
+    
+    hideLoading();
+}
+
+function displaySearchResults(results, query) {
+    const panel = document.getElementById('searchResultsPanel');
+    if (!panel) return;
+    
+    if (results.length === 0) {
+        panel.innerHTML = `<p style="color: var(--text-muted); padding: 20px;">No results found for "${query}"</p>`;
+    } else {
+        panel.innerHTML = `
+            <h4>Search Results (${results.length})</h4>
+            ${results.map((r, i) => `
+                <div class="search-result-item" data-cfi="${r.cfi}">
+                    Result ${i + 1} - ${r.matches} occurrence(s)
+                </div>
+            `).join('')}
+        `;
+        
+        // Add click handlers
+        panel.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (rendition) {
+                    rendition.display(item.dataset.cfi);
+                }
+            });
+        });
+    }
+    
+    panel.style.display = 'block';
+}
+
+// Bookmarks
+function addBookmark() {
+    if (!rendition) return;
+    
+    const location = rendition.currentLocation();
+    if (!location) return;
+    
+    const bookmark = {
+        cfi: location.start.cfi,
+        timestamp: Date.now(),
+        percent: Math.round(book.locations.percentageFromCfi(location.start.cfi) * 100),
+        label: `Page ${Math.round(book.locations.percentageFromCfi(location.start.cfi) * 100)}%`
+    };
+    
+    // Check if already bookmarked
+    if (epubBookmarks.some(b => b.cfi === bookmark.cfi)) {
+        alert('This location is already bookmarked');
+        return;
+    }
+    
+    epubBookmarks.push(bookmark);
+    saveBookmarks();
+    updateBookmarksPanel();
+    
+    // Visual feedback
+    showToast('Bookmark added ✓');
+}
+
+function removeBookmark(cfi) {
+    epubBookmarks = epubBookmarks.filter(b => b.cfi !== cfi);
+    saveBookmarks();
+    updateBookmarksPanel();
+}
+
+function updateBookmarksPanel() {
+    const panel = document.getElementById('bookmarksPanel');
+    if (!panel) return;
+    
+    if (epubBookmarks.length === 0) {
+        panel.innerHTML = '<p style="color: var(--text-muted); padding: 20px;">No bookmarks yet. Press Ctrl/Cmd+D to add.</p>';
+    } else {
+        panel.innerHTML = `
+            <h4>Bookmarks (${epubBookmarks.length})</h4>
+            ${epubBookmarks.map(b => `
+                <div class="bookmark-item">
+                    <span onclick="rendition.display('${b.cfi}')" style="cursor: pointer; flex: 1;">
+                        📖 ${b.label} - ${new Date(b.timestamp).toLocaleDateString()}
+                    </span>
+                    <button onclick="removeBookmark('${b.cfi}')" style="background: none; border: none; color: var(--error); cursor: pointer;">✕</button>
+                </div>
+            `).join('')}
+        `;
+    }
+}
+
+function toggleBookmarksPanel() {
+    const panel = document.getElementById('bookmarksPanel');
+    if (!panel) return;
+    
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    if (panel.style.display === 'block') {
+        updateBookmarksPanel();
+    }
+}
+
+// Text selection and highlighting
+function handleTextSelection(cfiRange, contents) {
+    if (!cfiRange) return;
+    
+    const highlight = {
+        cfi: cfiRange,
+        timestamp: Date.now()
+    };
+    
+    epubHighlights.push(highlight);
+    saveHighlights();
+    
+    // Apply highlight style
+    rendition.annotations.highlight(cfiRange, {}, (e) => {
+        console.log('Highlight clicked', e);
+    }, 'highlight', {
+        fill: 'yellow',
+        'fill-opacity': '0.3'
+    });
+    
+    showToast('Text highlighted ✓');
+}
+
+// Reading statistics
+function updateReadingStats() {
+    setInterval(() => {
+        if (readingStats.startTime && document.getElementById('epubContent').style.display !== 'none') {
+            readingStats.totalReadTime += 1;
+            updateStatsDisplay();
+            saveReadingStats();
+        }
+    }, 60000); // Update every minute
+}
+
+function updateStatsDisplay() {
+    const minutes = readingStats.totalReadTime;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    
+    const statsEl = document.getElementById('readingStats');
+    if (statsEl) {
+        statsEl.textContent = `Reading time: ${hours}h ${mins}m`;
+    }
+}
+
+// Storage functions
+function saveLastPosition(cfi) {
+    if (book && book.key) {
+        localStorage.setItem(`epub-position-${book.key}`, cfi);
+    }
+}
+
+function saveBookmarks() {
+    if (book && book.key) {
+        localStorage.setItem(`epub-bookmarks-${book.key}`, JSON.stringify(epubBookmarks));
+    }
+}
+
+function saveHighlights() {
+    if (book && book.key) {
+        localStorage.setItem(`epub-highlights-${book.key}`, JSON.stringify(epubHighlights));
+    }
+}
+
+function saveReadingStats() {
+    if (book && book.key) {
+        localStorage.setItem(`epub-stats-${book.key}`, JSON.stringify(readingStats));
+    }
+}
+
+function loadSavedData() {
+    // This will be called when a book is loaded
+    if (!book || !book.key) return;
+    
+    // Load bookmarks
+    const savedBookmarks = localStorage.getItem(`epub-bookmarks-${book.key}`);
+    if (savedBookmarks) {
+        epubBookmarks = JSON.parse(savedBookmarks);
+    }
+    
+    // Load highlights
+    const savedHighlights = localStorage.getItem(`epub-highlights-${book.key}`);
+    if (savedHighlights) {
+        epubHighlights = JSON.parse(savedHighlights);
+        // Reapply highlights
+        epubHighlights.forEach(h => {
+            rendition.annotations.highlight(h.cfi, {}, () => {}, 'highlight', {
+                fill: 'yellow',
+                'fill-opacity': '0.3'
+            });
+        });
+    }
+    
+    // Load stats
+    const savedStats = localStorage.getItem(`epub-stats-${book.key}`);
+    if (savedStats) {
+        readingStats = JSON.parse(savedStats);
+        updateStatsDisplay();
+    }
+    
+    // Load last position
+    const lastPosition = localStorage.getItem(`epub-position-${book.key}`);
+    if (lastPosition) {
+        setTimeout(() => {
+            if (confirm('Continue from where you left off?')) {
+                rendition.display(lastPosition);
+            }
+        }, 1000);
+    }
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--primary);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
 }
 
 // Initialize all tools

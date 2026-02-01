@@ -7,8 +7,19 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+    <!-- Load JSZip first, then epub.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Load epub.js after JSZip is ready -->
+    <script>
+        // Wait for JSZip to load before loading epub.js
+        window.addEventListener('load', function() {
+            if (typeof JSZip !== 'undefined') {
+                const epubScript = document.createElement('script');
+                epubScript.src = 'https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js';
+                document.head.appendChild(epubScript);
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="loading-overlay" id="loadingOverlay">
@@ -76,6 +87,18 @@
                                 <button class="btn btn-secondary" id="rotatePdf">🔄 Rotate</button>
                                 <button class="btn btn-primary" id="downloadPdf">💾 Download</button>
                             </div>
+                            
+                            <!-- Enhanced PDF controls -->
+                            <div class="pdf-enhanced-controls">
+                                <div class="search-box">
+                                    <input type="text" id="pdfSearchInput" placeholder="Search in PDF... (Ctrl/Cmd+F)">
+                                    <button class="btn btn-primary" id="searchPdf">🔍 Search</button>
+                                    <button class="btn btn-secondary" id="clearSearch" style="display: none;">Clear</button>
+                                </div>
+                            </div>
+                            
+                            <!-- PDF Search results panel -->
+                            <div id="pdfSearchResults" class="epub-panel" style="display: none;"></div>
                             
                             <div class="pdf-canvas-container" id="pdfCanvasContainer">
                                 <!-- Canvases will be created dynamically -->
@@ -192,6 +215,25 @@
                             <button class="btn btn-secondary" id="nextChapter">Next →</button>
                         </div>
                     </div>
+                    
+                    <!-- Enhanced controls for search and bookmarks -->
+                    <div class="epub-enhanced-controls">
+                        <div class="search-box">
+                            <input type="text" id="epubSearchInput" placeholder="Search in book... (Ctrl/Cmd+F)">
+                            <button class="btn btn-primary" id="searchEpub">🔍 Search</button>
+                        </div>
+                        <div class="bookmark-controls">
+                            <button class="btn btn-secondary" id="addBookmark">🔖 Add Bookmark (Ctrl/Cmd+D)</button>
+                            <button class="btn btn-secondary" id="showBookmarks">📚 View Bookmarks</button>
+                            <span id="readingStats" style="margin-left: 15px; color: var(--text-muted);"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Search results panel -->
+                    <div id="searchResultsPanel" class="epub-panel" style="display: none;"></div>
+                    
+                    <!-- Bookmarks panel -->
+                    <div id="bookmarksPanel" class="epub-panel" style="display: none;"></div>
                     
                     <div class="epub-container">
                         <div class="epub-toc" id="epubToc">

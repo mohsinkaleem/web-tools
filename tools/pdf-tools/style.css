@@ -607,3 +607,141 @@ header p {
         min-height: 60vh;
     }
 }
+
+/* Enhanced EPUB Features */
+.epub-enhanced-controls {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* PDF enhanced controls */
+.pdf-enhanced-controls {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.search-box {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 12px 20px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.bookmark-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.epub-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.epub-panel h4 {
+    margin: 0 0 15px 0;
+    color: var(--text);
+    font-size: 1.1rem;
+}
+
+.search-result-item, .bookmark-item {
+    padding: 12px 15px;
+    margin: 8px 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.search-result-item:hover, .bookmark-item:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateX(5px);
+}
+
+.bookmark-item button {
+    padding: 4px 8px;
+    font-size: 0.9rem;
+}
+
+/* Highlighted search results */
+.pdf-search-highlight {
+    background: rgba(255, 255, 0, 0.4);
+    padding: 2px;
+}
+
+/* Toast notifications */
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+/* Highlight styles for EPUB */
+.epub-content ::selection {
+    background: rgba(255, 255, 0, 0.3);
+}
+
+/* Responsive adjustments for new features */
+@media (max-width: 768px) {
+    .search-box {
+        flex-direction: column;
+    }
+    
+    .search-box input {
+        width: 100%;
+    }
+    
+    .bookmark-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .bookmark-controls button {
+        width: 100%;
+    }
+}
