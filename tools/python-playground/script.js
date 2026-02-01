@@ -126,7 +126,7 @@ async function main() {
     try {
         log("Loading Pyodide runtime...", "system");
         
-        // Load Pyodide
+        // Load Pyodide - auto-detects correct CDN path from script tag
         pyodide = await loadPyodide();
         
         log("Python runtime loaded.", "system");
