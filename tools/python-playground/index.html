@@ -19,6 +19,13 @@
     <script type="module">
         import { loadPyodide } from 'https://cdn.jsdelivr.net/pyodide/v0.29.3/full/pyodide.mjs';
         window.loadPyodide = loadPyodide;
+        window.pyodideReady = true;
+        console.log('Pyodide module loaded from CDN');
+        
+        // Trigger initialization if script already loaded
+        if (window.initPythonPlayground) {
+            window.initPythonPlayground();
+        }
     </script>
 </head>
 <body>

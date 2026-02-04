@@ -17,5 +17,5 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
 
 with socketserver.TCPServer(("", PORT), MyHTTPRequestHandler) as httpd:
-    print(f"Serving at port {PORT} with CORS and Isolation headers")
+    print(f"Serving at port http://localhost:{PORT} with CORS and Isolation headers")
     httpd.serve_forever()

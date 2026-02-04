@@ -158,6 +158,14 @@ async function main() {
     }
 }
 
+// Initialize when Pyodide is ready
+window.initPythonPlayground = function() {
+    if (window.pyodideReady && !window.playgroundInitialized) {
+        window.playgroundInitialized = true;
+        main();
+    }
+};
+
 // Run Code Handler
 runBtn.addEventListener('click', async () => {
     if (!pyodide) return;
@@ -242,5 +250,7 @@ clearReplBtn.addEventListener('click', () => {
     replConsole.innerHTML = '<div class="console-line system">REPL cleared.</div>';
 });
 
-// Start initialization
-main();
+// Start initialization when ready
+if (window.pyodideReady) {
+    initPythonPlayground();
+}
