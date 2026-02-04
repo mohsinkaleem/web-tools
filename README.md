@@ -42,10 +42,12 @@ Full Python interpreter in the browser powered by Pyodide:
 
 ### ✨ Text Prettifier
 Format, validate, and beautify code and data structures:
-- **Languages**: JSON, JavaScript, HTML, CSS, YAML, Markdown, XML, SQL
+- **Languages**: JSON, JavaScript, HTML, CSS, YAML, Markdown, XML, SQL, Python, Go
 - **Formatting**: Powered by Prettier, sql-formatter, and xml-formatter
 - **Minification**: Compact JSON, CSS, and XML
-- **Features**: Syntax highlighting, error reporting, copy/clear tools
+- **Text Transforms**: Base64, URL encoding, Case conversion (Snake, Camel), Sort, Unique lines
+- **Layout**: Side-by-side or stacked views
+- **Features**: Auto-format as you type, Syntax highlighting, Load sample snippets, Clear/Download/Copy tools
 - **XML Support**: Dedicated XML formatting and minification
 
 ## 🔒 Privacy First
@@ -59,7 +61,7 @@ web-tools/
 ├── tools/              # All web tool applications
 │   ├── image-tools/
 │   ├── pdf-tools/
-│   ├── text-formatter/
+│   ├── text-prettifier/
 │   └── python-playground/
 ├── README.md           # This file
 ├── AGENTS.md           # Guide for creating new tools

@@ -71,14 +71,20 @@
                 <div id="repl-tab" class="tab-content">
                     <div class="panel-header border-top-0">
                         <span><i class="fas fa-keyboard"></i> REPL Shell</span>
-                        <button id="clear-repl-btn" class="btn btn-sm">Clear</button>
+                        <div class="repl-controls">
+                            <button id="help-btn" class="btn btn-sm" title="Show REPL Help">
+                                <i class="fas fa-question-circle"></i>
+                            </button>
+                            <button id="clear-repl-btn" class="btn btn-sm">Clear</button>
+                        </div>
                     </div>
                     <div id="repl-console" class="console">
                         <div class="console-line system">Python REPL is ready. Type commands below.</div>
+                        <div class="console-line system">Tips: Use ↑/↓ for history, type help() for more info</div>
                     </div>
                     <div class="repl-input-container">
                         <span class="prompt">>>></span>
-                        <input type="text" id="repl-input" placeholder="Enter Python command..." disabled>
+                        <input type="text" id="repl-input" placeholder="Enter Python command... (↑/↓ for history)" disabled>
                     </div>
                 </div>
             </div>

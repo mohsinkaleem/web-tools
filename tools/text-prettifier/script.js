@@ -7,16 +7,25 @@ const inputEditor = CodeMirror(document.getElementById('input-editor'), {
     matchBrackets: true,
     lineWrapping: true,
     tabSize: 2,
-    indentWithTabs: false
+    indentWithTabs: false,
+    viewportMargin: Infinity
 });
+
 
 const outputEditor = CodeMirror(document.getElementById('output-editor'), {
     mode: 'application/json',
     theme: 'dracula',
     lineNumbers: true,
     readOnly: true,
-    lineWrapping: true
+    lineWrapping: true,
+    viewportMargin: Infinity
 });
+
+// Force refresh after a short delay to ensure correct sizing
+setTimeout(() => {
+    inputEditor.refresh();
+    outputEditor.refresh();
+}, 100);
 
 // DOM Elements
 const languageSelect = document.getElementById('language-select');
@@ -29,12 +38,10 @@ const clearBtn = document.getElementById('clear-btn');
 const statusIndicator = document.getElementById('status-indicator');
 const manageTabsCheck = document.getElementById('manage-tabs');
 const tabWidthInput = document.getElementById('tab-width');
-
-// Text Transformation Buttons
-const upperBtn = document.getElementById('upper-btn');
-const lowerBtn = document.getElementById('lower-btn');
-const titleBtn = document.getElementById('title-btn');
-const sortBtn = document.getElementById('sort-btn');
+const autoFormatCheck = document.getElementById('auto-format');
+const loadSampleBtn = document.getElementById('load-sample-btn');
+const mainEditorContainer = document.getElementById('main-editor-container');
+const layoutRadios = document.getElementsByName('layout');
 
 // Configuration
 const PRETTIER_PLUGINS = window.prettierPlugins;
@@ -62,12 +69,37 @@ detectBtn.addEventListener('click', detectLanguage);
 copyBtn.addEventListener('click', copyOutput);
 downloadBtn.addEventListener('click', downloadOutput);
 clearBtn.addEventListener('click', clearAll);
+loadSampleBtn.addEventListener('click', loadSample);
 
-// Text Transformation Listeners
-upperBtn.addEventListener('click', () => transformText('upper'));
-lowerBtn.addEventListener('click', () => transformText('lower'));
-titleBtn.addEventListener('click', () => transformText('title'));
-sortBtn.addEventListener('click', () => transformText('sort'));
+// Dropdown transforms
+document.querySelectorAll('.dropdown-content button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const transform = btn.getAttribute('data-transform');
+        applyTransform(transform);
+    });
+});
+
+// Layout toggle
+layoutRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+        if (radio.checked) {
+            mainEditorContainer.className = 'editor-container ' + radio.value;
+            inputEditor.refresh();
+            outputEditor.refresh();
+        }
+    });
+});
+
+// Click to focus
+document.getElementById('input-editor').addEventListener('click', () => inputEditor.focus());
+document.getElementById('output-editor').addEventListener('click', () => outputEditor.focus());
+
+// Auto-format on change if enabled
+inputEditor.on('change', () => {
+    if (autoFormatCheck.checked) {
+        formatCode();
+    }
+});
 
 function updateLanguage() {
     const lang = languageSelect.value;
@@ -76,6 +108,11 @@ function updateLanguage() {
     inputEditor.setOption('mode', config.mode);
     outputEditor.setOption('mode', config.mode);
     statusIndicator.textContent = '';
+    
+    // Auto-detect JSON vs other when language is changed manually
+    if (lang === 'json') {
+        inputEditor.setOption('tabSize', 2);
+    }
 }
 
 async function formatCode() {
@@ -133,10 +170,64 @@ async function formatCode() {
         outputEditor.setValue(formatted);
         showStatus('Success', 'success');
     } catch (err) {
-        console.error(err);
-        showStatus(`Error: ${err.message}`, 'error');
-        outputEditor.setValue(err.message); // Show error in output
+        // Only show error if not in auto-format mode to avoid cluttering UI while typing
+        if (!autoFormatCheck.checked) {
+            console.error(err);
+            showStatus(`Error: ${err.message}`, 'error');
+        }
     }
+}
+
+function applyTransform(type) {
+    const code = inputEditor.getValue();
+    if (!code.trim()) return;
+
+    try {
+        let result = '';
+        switch (type) {
+            case 'upper': result = code.toUpperCase(); break;
+            case 'lower': result = code.toLowerCase(); break;
+            case 'b64-enc': result = btoa(code); break;
+            case 'b64-dec': result = atob(code); break;
+            case 'url-enc': result = encodeURIComponent(code); break;
+            case 'url-dec': result = decodeURIComponent(code); break;
+            case 'snake': 
+                result = code.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`).replace(/\s+/g, '_').toLowerCase().replace(/^_+|_+$/g, '');
+                break;
+            case 'camel':
+                result = code.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
+                break;
+            case 'sort':
+                result = code.split('\n').sort().join('\n');
+                break;
+            case 'unique':
+                result = [...new Set(code.split('\n'))].join('\n');
+                break;
+        }
+        outputEditor.setValue(result);
+        showStatus('Transformed', 'success');
+    } catch (err) {
+        showStatus(`Transform Error: ${err.message}`, 'error');
+    }
+}
+
+function loadSample() {
+    const lang = languageSelect.value;
+    let sample = '';
+    
+    switch (lang) {
+        case 'json': sample = '{"name":"Web Tools","version":1.0,"features":["Format","Minify","Detect"],"active":true}'; break;
+        case 'javascript': sample = 'function hello(name) { console.log("Hello, " + name + "!"); } hello("World");'; break;
+        case 'html': sample = '<!DOCTYPE html>\n<html>\n<head><title>Sample</title></head>\n<body><h1>Hello</h1></body>\n</html>'; break;
+        case 'css': sample = 'body { background: #0f172a; color: #e2e8f0; font-family: sans-serif; } .container { max-width: 1200px; margin: 0 auto; }'; break;
+        case 'yaml': sample = 'name: Web Tools\nversion: 1.0\nfeatures:\n  - Format\n  - Minify\nactive: true'; break;
+        case 'sql': sample = 'SELECT id, name, email FROM users WHERE active = 1 ORDER BY created_at DESC;'; break;
+        case 'python': sample = 'def greet(name):\n    return f"Hello, {name}!"\n\nif __name__ == "__main__":\n    print(greet("Developer"))'; break;
+        default: sample = '// No sample for this language yet';
+    }
+    
+    inputEditor.setValue(sample);
+    formatCode();
 }
 
 function minifyCode() {
@@ -279,29 +370,6 @@ function downloadOutput() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-}
-
-function transformText(type) {
-    const code = inputEditor.getValue();
-    if (!code) return;
-
-    let result = '';
-    switch (type) {
-        case 'upper':
-            result = code.toUpperCase();
-            break;
-        case 'lower':
-            result = code.toLowerCase();
-            break;
-        case 'title':
-            result = code.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-            break;
-        case 'sort':
-            result = code.split('\n').sort().join('\n');
-            break;
-    }
-    outputEditor.setValue(result);
-    showStatus('Transformed', 'success');
 }
 
 // Initial mode setup

@@ -64,6 +64,23 @@
             <div class="tool-group actions">
                 <button id="format-btn" class="primary-btn"><i class="fas fa-magic"></i> Prettify</button>
                 <button id="minify-btn" class="secondary-btn"><i class="fas fa-compress-arrows-alt"></i> Minify</button>
+                <div class="dropdown">
+                    <button id="transform-btn" class="secondary-btn"><i class="fas fa-exchange-alt"></i> Transform <i class="fas fa-caret-down"></i></button>
+                    <div class="dropdown-content">
+                        <button data-transform="b64-enc">Base64 Encode</button>
+                        <button data-transform="b64-dec">Base64 Decode</button>
+                        <button data-transform="url-enc">URL Encode</button>
+                        <button data-transform="url-dec">URL Decode</button>
+                        <hr>
+                        <button data-transform="upper">Uppercase</button>
+                        <button data-transform="lower">Lowercase</button>
+                        <button data-transform="snake">Snake Case</button>
+                        <button data-transform="camel">Camel Case</button>
+                        <hr>
+                        <button data-transform="sort">Sort Lines</button>
+                        <button data-transform="unique">Unique Lines</button>
+                    </div>
+                </div>
                 <button id="detect-btn" class="secondary-btn" title="Auto Detect Language"><i class="fas fa-search"></i> Detect</button>
                 <button id="copy-btn" class="icon-btn" title="Copy Output"><i class="far fa-copy"></i></button>
                 <button id="download-btn" class="icon-btn" title="Download Output"><i class="fas fa-download"></i></button>
@@ -71,15 +88,20 @@
             </div>
         </div>
 
-        <div class="editor-container">
+        <div class="editor-container" id="main-editor-container">
             <div class="editor-pane">
-                <div class="pane-header">Input</div>
+                <div class="pane-header">
+                    Input
+                    <button id="load-sample-btn" class="text-btn">Load Sample</button>
+                </div>
                 <div id="input-editor"></div>
             </div>
             <div class="editor-pane">
                 <div class="pane-header">
                     Output 
-                    <span id="status-indicator" class="status"></span>
+                    <div class="output-controls">
+                        <span id="status-indicator" class="status"></span>
+                    </div>
                 </div>
                 <div id="output-editor"></div>
             </div>
@@ -96,17 +118,24 @@
                         <label>
                             Tab Width: <input type="number" id="tab-width" value="2" min="2" max="8">
                         </label>
+                        <label>
+                            <input type="checkbox" id="auto-format"> Auto Format
+                        </label>
                     </div>
                 </div>
                 <div class="option-section">
-                    <h3>Text Transformations</h3>
+                    <h3>Layout</h3>
                     <div class="option-group">
-                        <button id="upper-btn" class="text-tool-btn">UPPERCASE</button>
-                        <button id="lower-btn" class="text-tool-btn">lowercase</button>
-                        <button id="title-btn" class="text-tool-btn">Title Case</button>
-                        <button id="sort-btn" class="text-tool-btn">Sort Lines</button>
+                        <label>
+                            <input type="radio" name="layout" value="side" checked> Side-by-Side
+                        </label>
+                        <label>
+                            <input type="radio" name="layout" value="stack"> Stacked
+                        </label>
                     </div>
                 </div>
+            </div>
+        </div>
             </div>
         </div>
     </div>

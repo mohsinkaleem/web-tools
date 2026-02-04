@@ -7,26 +7,18 @@ const editor = CodeMirror(document.getElementById('editor-container'), {
     matchBrackets: true,
     autoCloseBrackets: true,
     viewportMargin: Infinity,
-    value: `# Python Playground
-# Run Python code directly in your browser!
+    value: `# Welcome to Python Playground!
+# Write and run Python code directly in your browser
 
-import sys
-import numpy as np
+# Simple example
+name = "World"
+print(f"Hello, {name}!")
 
-print(f"Python version: {sys.version}")
+# Basic calculations
+for i in range(5):
+    print(f"{i} squared is {i**2}")
 
-def calculate_pi(n_points):
-    print(f"Calculating Pi using {n_points} Monte Carlo points...")
-    x = np.random.rand(n_points)
-    y = np.random.rand(n_points)
-    
-    inside_circle = np.sum(x**2 + y**2 <= 1.0)
-    pi_estimate = 4 * inside_circle / n_points
-    return pi_estimate
-
-# Try running it!
-pi = calculate_pi(100000)
-print(f"Estimated Pi: {pi}")
+# Try the REPL tab for interactive coding!
 `
 });
 
@@ -39,12 +31,15 @@ const outputConsole = document.getElementById('output-console');
 const replConsole = document.getElementById('repl-console');
 const clearBtn = document.getElementById('clear-btn');
 const clearReplBtn = document.getElementById('clear-repl-btn');
+const helpBtn = document.getElementById('help-btn');
 const replInput = document.getElementById('repl-input');
 const tabBtns = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
 
 let pyodide = null;
 let currentTab = 'output';
+let replHistory = [];
+let historyIndex = -1;
 
 // Logger
 function log(message, type = '', target = 'output') {
@@ -209,9 +204,34 @@ runBtn.addEventListener('click', async () => {
 
 // REPL Handler
 replInput.addEventListener('keydown', async (e) => {
+    // History navigation
+    if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (historyIndex < replHistory.length - 1) {
+            historyIndex++;
+            replInput.value = replHistory[replHistory.length - 1 - historyIndex];
+        }
+        return;
+    }
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (historyIndex > 0) {
+            historyIndex--;
+            replInput.value = replHistory[replHistory.length - 1 - historyIndex];
+        } else if (historyIndex === 0) {
+            historyIndex = -1;
+            replInput.value = '';
+        }
+        return;
+    }
+    
     if (e.key === 'Enter') {
         const code = replInput.value.trim();
         if (!code) return;
+
+        // Add to history
+        replHistory.push(code);
+        historyIndex = -1;
 
         replLog(`>>> ${code}`, 'user-input');
         replInput.value = '';
@@ -248,6 +268,20 @@ clearBtn.addEventListener('click', () => {
 
 clearReplBtn.addEventListener('click', () => {
     replConsole.innerHTML = '<div class="console-line system">REPL cleared.</div>';
+    replHistory = [];
+    historyIndex = -1;
+});
+
+// Help Button Handler
+helpBtn.addEventListener('click', () => {
+    replLog('=== Python REPL Help ===', 'system');
+    replLog('• Use ↑/↓ arrow keys to navigate command history', 'system');
+    replLog('• Type any Python expression or statement', 'system');
+    replLog('• Import libraries: import math, numpy as np, etc.', 'system');
+    replLog('• Define functions and classes interactively', 'system');
+    replLog('• Access variables from previous commands', 'system');
+    replLog('• Use dir() to list available names', 'system');
+    replLog('• Use help(obj) to get help on any object', 'system');
 });
 
 // Start initialization when ready

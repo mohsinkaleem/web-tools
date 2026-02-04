@@ -146,16 +146,28 @@ button {
     overflow: hidden;
 }
 
+.editor-container.stack {
+    flex-direction: column;
+    height: 800px;
+}
+
 .editor-pane {
     flex: 1;
     display: flex;
     flex-direction: column;
     min-width: 0;
+    min-height: 0; /* Important for flex children scrolling */
     border-right: 1px solid var(--border);
+}
+
+.editor-container.stack .editor-pane {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
 }
 
 .editor-pane:last-child {
     border-right: none;
+    border-bottom: none;
 }
 
 .pane-header {
@@ -168,12 +180,98 @@ button {
     letter-spacing: 0.05em;
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 
 .CodeMirror {
     height: 100% !important;
     font-family: 'Fira Code', 'Consolas', monospace;
     font-size: 14px;
+    flex: 1;
+}
+
+/* Fix for clicking empty area in editor */
+.CodeMirror-lines {
+    cursor: text;
+}
+
+#input-editor, #output-editor {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+}
+
+/* Dropdown Styles */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--bg-card);
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+    z-index: 100;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    top: 100%;
+    right: 0;
+}
+
+.dropdown-content button {
+    color: var(--text);
+    padding: 10px 16px;
+    text-decoration: none;
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border-radius: 0;
+    font-size: 0.85rem;
+    border: none;
+    cursor: pointer;
+}
+
+.dropdown-content button:hover {
+    background-color: var(--primary);
+}
+
+.dropdown-content hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 4px 0;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.text-btn {
+    background: transparent;
+    color: var(--primary);
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    text-transform: none;
+    cursor: pointer;
+    border: none;
+}
+
+.text-btn:hover {
+    text-decoration: underline;
+}
+
+.output-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#input-editor .CodeMirror,
+#output-editor .CodeMirror {
+    height: 100% !important;
 }
 
 .status {
